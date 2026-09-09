@@ -1,12 +1,9 @@
-# ATTENZIONE: script troncato nel PDF originale del resoconto esteso.
-# La versione integrale era allegata separatamente come file .py e non e' disponibile.
-# Estratto automaticamente da resoconto_progetto_ESTESO.pdf (pdftotext); possibili artefatti di formattazione.
-
 """
 CATENA DI DUE ATTRATTORI: l'attivazione dell'uno determina l'altro
 ====================================================================
 Estensione del ring attractor a due popolazioni collegate:
-  RING A: riceve lo stimolo esterno diretto, si comporta esattamente
+
+  RING A: riceve lo stimolo esterno diretto, si comporta esattamente
           come il ring attractor singolo gia' verificato
 
   RING B: NON riceve alcuno stimolo esterno diretto. L'unico input che
@@ -33,10 +30,8 @@ matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 
 
-
 def circ_dist(d):
     return 0.5 - np.abs(np.abs(d) - 0.5)
-
 
 
 N = 200
@@ -57,14 +52,12 @@ stim_duration_ms = 80
 d_matrix = circ_dist(x[:, None] - x[None, :])
 J_exc = A_exc * np.exp(-d_matrix**2 / (2*sigma_exc**2))
 
-OFFSET_AB = 0.3           # spostamento fisso della mappa associativa A->B
-COUPLING_STRENGTH = 1.3    # intensita' dell'influenza di A su B
-
+OFFSET_AB = 0.3          # spostamento fisso della mappa associativa A->B
+COUPLING_STRENGTH = 1.3   # intensita' dell'influenza di A su B
 
 
 def F(u):
     return np.clip(u, 0, r_max)
-
 
 
 def run_chained(stim_center_A, apply_stim=True):
@@ -73,11 +66,12 @@ def run_chained(stim_center_A, apply_stim=True):
     stim_duration_steps = int(stim_duration_ms/dt)
     stim_profile = (stim_strength * np.exp(-circ_dist(x-stim_center_A)**2/(2*stim_width**2))
                      if apply_stim else np.zeros(N))
-   history_A = np.zeros((n_steps, N))
-   history_B = np.zeros((n_steps, N))
 
-   for step in range(n_steps):
-       I_ext_A = stim_profile if (apply_stim and step < stim_duration_steps) else 0.0
+    history_A = np.zeros((n_steps, N))
+    history_B = np.zeros((n_steps, N))
+
+    for step in range(n_steps):
+        I_ext_A = stim_profile if (apply_stim and step < stim_duration_steps) else 0.0
 
         rec_A = J_exc @ rA / N - global_inhib*rA.mean()
         drA = (-rA + F(rec_A + I_ext_A)) / tau
@@ -99,8 +93,7 @@ def run_chained(stim_center_A, apply_stim=True):
         history_A[step] = rA
         history_B[step] = rB
 
-   return rA, rB, history_A, history_B
-
+    return rA, rB, history_A, history_B
 
 
 if __name__ == '__main__':
@@ -114,4 +107,44 @@ if __name__ == '__main__':
         posB = x[np.argmax(rB_final)] if rB_final.max() > 0.5 else None
         posB_str = f"{posB:.3f}" if posB is not None else "NESSUN BUMP"
         expected_B = (center_A + OFFSET_AB) % 1.0
-        print(f" Stimolo A a x={center_A:.2f} -> A: x={posA:.3f}, "
+        print(f"  Stimolo A a x={center_A:.2f} -> A: x={posA:.3f}, "
+              f"B: x={posB_str} (atteso ~{expected_B:.3f})")
+
+    print("\n" + "=" * 65)
+    print("TEST 2: controllo -- senza stimolo ad A, ne' A ne' B si attivano")
+    print("=" * 65)
+    rA0, rB0, _, _ = run_chained(0.3, apply_stim=False)
+    print(f"  A picco finale: {rA0.max():.6f}")
+    print(f"  B picco finale: {rB0.max():.6f}")
+    if rA0.max() < 0.01 and rB0.max() < 0.01:
+        print("  >>> Confermato: nessuna attivazione spontanea. <<<")
+
+    # -------------------------------------------------------------
+    # VISUALIZZAZIONE: spazio-tempo di A e B per il caso stimolo a x=0.3
+    # -------------------------------------------------------------
+    _, _, history_A, history_B = run_chained(0.3)
+    t_axis = np.arange(n_steps)*dt
+
+    fig, axes = plt.subplots(2, 1, figsize=(10, 8), sharex=True)
+
+    im0 = axes[0].imshow(history_A.T, aspect='auto', origin='lower', cmap='inferno',
+                          extent=[0, T_total, 0, 1])
+    axes[0].axvline(stim_duration_ms, color='cyan', linestyle='--', linewidth=1.2,
+                     label='fine stimolo esterno (solo su A)')
+    axes[0].set_ylabel('Posizione su Ring A')
+    axes[0].set_title('Ring A: riceve lo stimolo esterno direttamente')
+    axes[0].legend(loc='upper right', fontsize=8)
+    plt.colorbar(im0, ax=axes[0], label='r_A(x,t)')
+
+    im1 = axes[1].imshow(history_B.T, aspect='auto', origin='lower', cmap='viridis',
+                          extent=[0, T_total, 0, 1])
+    axes[1].axvline(stim_duration_ms, color='cyan', linestyle='--', linewidth=1.2)
+    axes[1].set_xlabel('Tempo (ms)')
+    axes[1].set_ylabel('Posizione su Ring B')
+    axes[1].set_title('Ring B: NESSUNO stimolo esterno -- si accende solo grazie ad A '
+                       '(nota il ritardo)')
+    plt.colorbar(im1, ax=axes[1], label='r_B(x,t)')
+
+    plt.tight_layout()
+    plt.savefig('chained_attractors.png', dpi=150)
+    print("\nGrafico salvato in chained_attractors.png")

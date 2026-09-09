@@ -1,14 +1,11 @@
-# ATTENZIONE: script troncato nel PDF originale del resoconto esteso.
-# La versione integrale era allegata separatamente come file .py e non e' disponibile.
-# Estratto automaticamente da resoconto_progetto_ESTESO.pdf (pdftotext); possibili artefatti di formattazione.
-
 """
 DUE MODULI COLLEGATI: verso un'architettura con "regioni"
 ====================================================================
 Finora avevamo una singola rete di 300 neuroni, tutti potenzialmente
 collegabili tra loro con la stessa probabilita'. Qui invece costruiamo
 due "regioni" distinte:
-  MODULO 1: 150 neuroni (120 eccitatori + 30 inibitori)
+
+  MODULO 1: 150 neuroni (120 eccitatori + 30 inibitori)
   MODULO 2: 150 neuroni (120 eccitatori + 30 inibitori)
 
 Dentro ogni modulo, la connettivita' e' densa (10%, come nella rete
@@ -70,7 +67,7 @@ bg_syn.connect(j='i')
 
 # ---------------------------------------------------------------
 # CONNETTIVITA' DENTRO OGNI MODULO (densa, 10%, E e I come prima)
-# ---------------------------------------------------------------
+# ---------------------------------------------------------------
 p_local = 0.1
 w_exc = 1.0*mV
 w_inh = 4.0*mV
@@ -106,8 +103,82 @@ syn_21.connect(p=p_inter)
 run(200*ms)
 print("Burn-in completato.")
 
-rate_mon1 = PopulationRateMonitor(neurons[0:150])     # Modulo 1
-rate_mon2 = PopulationRateMonitor(neurons[150:300])   # Modulo 2
+rate_mon1 = PopulationRateMonitor(neurons[0:150])    # Modulo 1
+rate_mon2 = PopulationRateMonitor(neurons[150:300])  # Modulo 2
 spikes = SpikeMonitor(neurons)
 
 run(200*ms)
+print("Baseline registrata.")
+
+# ---------------------------------------------------------------
+# STIMOLO: solo 20 neuroni eccitatori del MODULO 1
+# ---------------------------------------------------------------
+N_STIM = 20
+stim_group = M1_E[:N_STIM]
+stim_time = 400*ms
+stim_group.I = 40*mV/ms
+run(20*ms)
+stim_group.I = 0*mV/ms
+print(f"Stimolo applicato a {N_STIM} neuroni del Modulo 1 (il Modulo 2 non riceve nulla).")
+
+run(280*ms)
+print("Recovery completato.")
+
+# ---------------------------------------------------------------
+# ANALISI
+# ---------------------------------------------------------------
+r1 = array(rate_mon1.smooth_rate(window='flat', width=5*ms)/Hz)
+r2 = array(rate_mon2.smooth_rate(window='flat', width=5*ms)/Hz)
+t = array(rate_mon1.t/ms)
+
+base1 = r1[(t > 200) & (t < 400)].mean()
+base2 = r2[(t > 200) & (t < 400)].mean()
+peak1 = r1[(t >= 400) & (t < 450)].max()
+peak2 = r2[(t >= 400) & (t < 450)].max()
+
+print("\n" + "=" * 55)
+print("RISULTATI")
+print("=" * 55)
+print(f"MODULO 1 (stimolato direttamente):")
+print(f"  baseline: {base1:.2f} Hz -> picco: {peak1:.2f} Hz "
+      f"(+{peak1-base1:.2f} Hz)")
+print(f"MODULO 2 (NON stimolato direttamente):")
+print(f"  baseline: {base2:.2f} Hz -> picco: {peak2:.2f} Hz "
+      f"(+{peak2-base2:.2f} Hz)")
+if peak2 - base2 > 3:
+    print("\n>>> Il segnale si e' propagato al Modulo 2, "
+          "anche se attenuato rispetto al Modulo 1. <<<")
+else:
+    print("\n>>> Il segnale non si e' propagato in modo significativo "
+          "al Modulo 2. <<<")
+
+# ---------------------------------------------------------------
+# VISUALIZZAZIONE
+# ---------------------------------------------------------------
+figure(figsize=(11, 8))
+
+subplot(2, 1, 1)
+mod1_mask = spikes.i < 150
+plot(spikes.t[mod1_mask]/ms, spikes.i[mod1_mask], '.', color='C0',
+     markersize=2, label='Modulo 1 (stimolato)')
+plot(spikes.t[~mod1_mask]/ms, spikes.i[~mod1_mask], '.', color='C2',
+     markersize=2, label='Modulo 2 (non stimolato)')
+axhline(150, color='black', linewidth=0.8, linestyle='-')
+axvspan(stim_time/ms, (stim_time+20*ms)/ms, color='red', alpha=0.15)
+ylabel('Indice neurone')
+title('Raster: i due moduli (linea nera = confine tra Modulo 1 e Modulo 2)')
+legend(loc='upper right', markerscale=4, fontsize=8)
+
+subplot(2, 1, 2)
+plot(t, r1, color='C0', label='Modulo 1 (stimolato)', linewidth=1.2)
+plot(t, r2, color='C2', label='Modulo 2 (non stimolato)', linewidth=1.2)
+axvspan(stim_time/ms, (stim_time+20*ms)/ms, color='red', alpha=0.15, label='stimolo')
+xlabel('Tempo (ms)')
+ylabel('Frequenza popolazione (Hz)')
+title('Confronto della risposta: propagazione del segnale tra moduli')
+legend(loc='upper right', fontsize=8)
+grid(alpha=0.3)
+
+tight_layout()
+savefig('due_moduli.png', dpi=150)
+print("\nGrafico salvato in due_moduli.png")

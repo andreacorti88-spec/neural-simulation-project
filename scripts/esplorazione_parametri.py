@@ -1,7 +1,3 @@
-# ATTENZIONE: script troncato nel PDF originale del resoconto esteso.
-# La versione integrale era allegata separatamente come file .py e non e' disponibile.
-# Estratto automaticamente da resoconto_progetto_ESTESO.pdf (pdftotext); possibili artefatti di formattazione.
-
 """
 ESPLORAZIONE PARAMETRI: delay sinaptico e intensita' della sinapsi
 ====================================================================
@@ -13,7 +9,7 @@ Cosi' vediamo concretamente:
   1. Come il delay sposta nel tempo la risposta di B
   2. Come, sotto una certa intensita', B smette del tutto di sparare
      (concetto di SOGLIA SINAPTICA: se lo stimolo non basta a far
-       superare la soglia di attivazione, il neurone non risponde)
+     superare la soglia di attivazione, il neurone non risponde)
 """
 
 from brian2 import *
@@ -32,23 +28,22 @@ I : volt/second
 def run_simulation(delay_ms, synapse_strength_mV):
     """Esegue la simulazione con un dato delay e una data intensita' sinaptica.
     Ritorna i tempi e gli indici degli spike (per A e B)."""
-    start_scope() # resetta l'ambiente Brian2 tra una run e l'altra
+    start_scope()  # resetta l'ambiente Brian2 tra una run e l'altra
 
-      neurons = NeuronGroup(2, eqs, threshold='v > 30*mV', reset='v = c; u += d',
-                             method='euler')
-      neurons.v = -65*mV
-      neurons.u = b * neurons.v
-      neurons.I = [15*mV/ms, 0*mV/ms]
+    neurons = NeuronGroup(2, eqs, threshold='v > 30*mV', reset='v = c; u += d',
+                           method='euler')
+    neurons.v = -65*mV
+    neurons.u = b * neurons.v
+    neurons.I = [15*mV/ms, 0*mV/ms]
 
-      syn = Synapses(neurons, neurons, on_pre=f'v_post += {synapse_strength_mV}*mV')
-      syn.connect(i=0, j=1)
-      syn.delay = delay_ms*ms
+    syn = Synapses(neurons, neurons, on_pre=f'v_post += {synapse_strength_mV}*mV')
+    syn.connect(i=0, j=1)
+    syn.delay = delay_ms*ms
 
-      spikes = SpikeMonitor(neurons)
-      run(200*ms)
+    spikes = SpikeMonitor(neurons)
+    run(200*ms)
 
-      return spikes.t/ms, spikes.i, sum(spikes.i == 0), sum(spikes.i == 1)
-
+    return spikes.t/ms, spikes.i, sum(spikes.i == 0), sum(spikes.i == 1)
 
 
 # ---------------------------------------------------------------
@@ -73,3 +68,27 @@ savefig('esperimento_delay.png', dpi=150)
 print("Grafico 1 salvato: esperimento_delay.png")
 
 # ---------------------------------------------------------------
+# ESPERIMENTO 2: variare l'intensita' della sinapsi (delay fisso a 1.5 ms)
+# ---------------------------------------------------------------
+strengths_to_test = [2, 5, 10, 20, 30]
+
+print("\nEsperimento intensita' sinaptica:")
+print(f"{'Intensita (mV)':>15} | {'Spike di A':>10} | {'Spike di B':>10}")
+print("-" * 42)
+
+results = []
+for strength in strengths_to_test:
+    t, i, n_a, n_b = run_simulation(1.5, strength)
+    results.append((strength, n_b))
+    print(f"{strength:>15} | {n_a:>10} | {n_b:>10}")
+
+figure(figsize=(7, 4))
+strengths, n_b_values = zip(*results)
+plot(strengths, n_b_values, 'o-', markersize=8)
+xlabel('Intensita\' sinaptica (mV)')
+ylabel('Numero di spike di B')
+title('Soglia sinaptica: sotto un certo valore, B non risponde piu\'')
+axhline(0, color='gray', linewidth=0.5)
+grid(alpha=0.3)
+savefig('esperimento_soglia.png', dpi=150)
+print("\nGrafico 2 salvato: esperimento_soglia.png")

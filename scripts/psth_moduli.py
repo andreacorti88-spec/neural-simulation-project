@@ -1,7 +1,3 @@
-# ATTENZIONE: script troncato nel PDF originale del resoconto esteso.
-# La versione integrale era allegata separatamente come file .py e non e' disponibile.
-# Estratto automaticamente da resoconto_progetto_ESTESO.pdf (pdftotext); possibili artefatti di formattazione.
-
 """
 PROVE RIPETUTE E MEDIA (PSTH): la propagazione e' reale o e' rumore?
 ====================================================================
@@ -25,7 +21,7 @@ In questo script:
      finestra [-50, +150] ms attorno allo stimolo
   3. Facciamo la media (e calcoliamo l'errore standard) su tutte le
      25 ripetizioni
-  4. Confrontiamo il risultato mediato con la variabilita' naturale
+  4. Confrontiamo il risultato mediato con la variabilita' naturale
      di una singola prova, per capire se l'effetto e' reale
 """
 
@@ -88,7 +84,7 @@ p_inter = 0.02
 w_inter = 1.0*mV
 syn_12 = Synapses(M1_E, M2_E, on_pre='v_post += w_inter')
 syn_12.connect(p=p_inter)
-syn_21 = Synapses(M2_E, M1_E, on_pre='v_post += w_inter')
+syn_21 = Synapses(M2_E, M1_E, on_pre='v_post += w_inter')
 syn_21.connect(p=p_inter)
 
 # ---------------------------------------------------------------
@@ -105,7 +101,7 @@ spikes = SpikeMonitor(neurons)
 # ripetizione e la successiva)
 # ---------------------------------------------------------------
 N_TRIALS = 25
-ISI = 300*ms           # tempo tra uno stimolo e il successivo
+ISI = 300*ms          # tempo tra uno stimolo e il successivo
 stim_dur = 20*ms
 stim_group = M1_E[:20]
 
@@ -132,3 +128,62 @@ window_pre, window_post, bin_size = 50, 150, 5
 bins = np.arange(-window_pre, window_post, bin_size)
 bin_centers = bins[:-1] + bin_size/2
 
+def compute_psth(mask, n_neurons):
+    all_trials = np.zeros((N_TRIALS, len(bins)-1))
+    for k, st in enumerate(stim_times):
+        rel_t = t_spikes[mask] - st
+        sel = (rel_t >= -window_pre) & (rel_t < window_post)
+        hist, _ = np.histogram(rel_t[sel], bins=bins)
+        all_trials[k] = hist / (bin_size/1000) / n_neurons  # Hz
+    return all_trials
+
+psth1 = compute_psth(mod1_mask, 150)
+psth2 = compute_psth(mod2_mask, 150)
+
+mean1, sem1 = psth1.mean(axis=0), psth1.std(axis=0)/np.sqrt(N_TRIALS)
+mean2, sem2 = psth2.mean(axis=0), psth2.std(axis=0)/np.sqrt(N_TRIALS)
+
+baseline2 = mean2[bin_centers < 0].mean()
+peak2 = mean2[(bin_centers >= 0) & (bin_centers < 50)].max()
+trial_std2 = psth2[:, bin_centers < 0].std()  # variabilita' di una singola prova
+
+print("\n" + "=" * 60)
+print("RISULTATO (media su 25 prove, con errore standard)")
+print("=" * 60)
+print(f"Modulo 2 -- baseline media: {baseline2:.2f} Hz")
+print(f"Modulo 2 -- picco medio dopo stimolo: {peak2:.2f} Hz")
+print(f"Modulo 2 -- effetto medio: +{peak2-baseline2:.2f} Hz")
+print(f"Variabilita' naturale di UNA SINGOLA prova (deviazione standard): "
+      f"{trial_std2:.2f} Hz")
+print(f"\nConfronto: l'effetto medio (+{peak2-baseline2:.2f} Hz) e' "
+      f"{'chiaramente sopra' if (peak2-baseline2) > trial_std2 else 'paragonabile a'} "
+      f"il rumore di una singola prova ({trial_std2:.2f} Hz)")
+print("Questo e' il motivo per cui una sola prova non basta a "
+      "concludere se la propagazione e' reale.")
+
+# ---------------------------------------------------------------
+# VISUALIZZAZIONE
+# ---------------------------------------------------------------
+figure(figsize=(11, 7))
+
+subplot(2, 1, 1)
+plot(bin_centers, mean1, color='C0', label='Modulo 1 (stimolato)')
+fill_between(bin_centers, mean1-sem1, mean1+sem1, color='C0', alpha=0.3)
+axvspan(0, 20, color='red', alpha=0.15)
+ylabel('Frequenza media (Hz)')
+title(f'PSTH Modulo 1 -- media su {N_TRIALS} prove (banda = errore standard)')
+legend(loc='upper right', fontsize=8)
+
+subplot(2, 1, 2)
+plot(bin_centers, mean2, color='C2', label='Modulo 2 (non stimolato)')
+fill_between(bin_centers, mean2-sem2, mean2+sem2, color='C2', alpha=0.3)
+axhline(baseline2, color='gray', linestyle='--', linewidth=1, label='baseline')
+axvspan(0, 20, color='red', alpha=0.15, label='stimolo')
+xlabel('Tempo relativo allo stimolo (ms)')
+ylabel('Frequenza media (Hz)')
+title(f'PSTH Modulo 2 -- media su {N_TRIALS} prove (banda = errore standard)')
+legend(loc='upper right', fontsize=8)
+
+tight_layout()
+savefig('psth_moduli.png', dpi=150)
+print("\nGrafico salvato in psth_moduli.png")

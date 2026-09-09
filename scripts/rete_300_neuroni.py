@@ -1,12 +1,8 @@
-# ATTENZIONE: script troncato nel PDF originale del resoconto esteso.
-# La versione integrale era allegata separatamente come file .py e non e' disponibile.
-# Estratto automaticamente da resoconto_progetto_ESTESO.pdf (pdftotext); possibili artefatti di formattazione.
-
 """
 RETE BILANCIATA ECCITAZIONE-INIBIZIONE (300 neuroni)
 ====================================================================
 Finora tutte le sinapsi erano eccitatorie: con poche decine di
-neuroni va bene, ma scalando a centinaia una rete solo eccitatoria
+neuroni va bene, ma scalando a centinaia una rete solo eccitatoria
 esplode (tutti sparano insieme, poi saturano) oppure si spegne.
 
 Qui costruiamo il modello standard usato in neuroscienza
@@ -61,7 +57,7 @@ neurons.u = b * neurons.v[:]
 neurons.I = 0*mV/ms
 
 E = neurons[:N_E]   # sotto-gruppo eccitatorio
-I_pop = neurons[N_E:] # sotto-gruppo inibitorio
+I_pop = neurons[N_E:]  # sotto-gruppo inibitorio
 
 # ---------------------------------------------------------------
 # STIMOLAZIONE DI FONDO (rumore casuale, simula input esterno costante)
@@ -69,7 +65,8 @@ I_pop = neurons[N_E:] # sotto-gruppo inibitorio
 background = PoissonGroup(N, rates=1500*Hz)
 bg_syn = Synapses(background, neurons, on_pre='v_post += 3*mV')
 bg_syn.connect(j='i')   # ogni neurone riceve il proprio rumore indipendente
-# ---------------------------------------------------------------
+
+# ---------------------------------------------------------------
 # CONNETTIVITA' SPARSA CASUALE (10% di probabilita' di connessione)
 # ---------------------------------------------------------------
 p_conn = 0.1
@@ -100,7 +97,7 @@ run(500*ms)
 # ANALISI
 # ---------------------------------------------------------------
 n_spikes_total = sum(spikes.count)
-rate_medio = n_spikes_total / N / 0.5 # Hz, su 500ms di simulazione
+rate_medio = n_spikes_total / N / 0.5  # Hz, su 500ms di simulazione
 
 # frequenza media separata per popolazione E e I
 spikes_E = sum(spikes.count[:N_E])
@@ -111,3 +108,36 @@ rate_I = spikes_I / N_I / 0.5
 print("=" * 55)
 print(f"Rete: {N_E} eccitatori + {N_I} inibitori = {N} neuroni totali")
 print(f"Connettivita': {p_conn*100:.0f}% (sparsa e casuale)")
+print("=" * 55)
+print(f"Spike totali in 500ms: {n_spikes_total}")
+print(f"Frequenza media della rete: {rate_medio:.2f} Hz")
+print(f"Frequenza media eccitatori: {rate_E:.2f} Hz")
+print(f"Frequenza media inibitori:  {rate_I:.2f} Hz")
+
+# ---------------------------------------------------------------
+# VISUALIZZAZIONE
+# ---------------------------------------------------------------
+figure(figsize=(11, 7))
+
+subplot(2, 1, 1)
+# raster: eccitatori in blu, inibitori in rosso
+exc_mask = spikes.i < N_E
+plot(spikes.t[exc_mask]/ms, spikes.i[exc_mask], '.', color='C0',
+     markersize=2, label=f'Eccitatori (n={N_E})')
+plot(spikes.t[~exc_mask]/ms, spikes.i[~exc_mask], '.', color='C3',
+     markersize=2, label=f'Inibitori (n={N_I})')
+ylabel('Indice neurone')
+title(f'Raster della rete ({N} neuroni, connettivita\' sparsa al {p_conn*100:.0f}%)')
+legend(loc='upper right', markerscale=5, fontsize=8)
+
+subplot(2, 1, 2)
+plot(rate_mon.t/ms, rate_mon.smooth_rate(window='flat', width=5*ms)/Hz,
+     color='black')
+xlabel('Tempo (ms)')
+ylabel('Frequenza di scarica\ndella popolazione (Hz)')
+title('Attivita\' collettiva della rete nel tempo')
+grid(alpha=0.3)
+
+tight_layout()
+savefig('rete_300_neuroni.png', dpi=150)
+print("\nGrafico salvato in rete_300_neuroni.png")

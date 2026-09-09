@@ -1,7 +1,3 @@
-# ATTENZIONE: script troncato nel PDF originale del resoconto esteso.
-# La versione integrale era allegata separatamente come file .py e non e' disponibile.
-# Estratto automaticamente da resoconto_progetto_ESTESO.pdf (pdftotext); possibili artefatti di formattazione.
-
 """
 APPRENDIMENTO PER RINFORZO: la rete impara QUALE alternativa scegliere
 ====================================================================
@@ -31,10 +27,8 @@ matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 
 
-
 def circ_dist(d):
     return 0.5 - np.abs(np.abs(d) - 0.5)
-
 
 
 N = 200
@@ -43,7 +37,8 @@ tau = 10.0
 dt = 0.2
 T_total = 500
 n_steps = int(T_total/dt)
-A_exc = 20.0
+
+A_exc = 20.0
 sigma_exc = 0.05
 global_inhib = 5.0
 r_max = 5.0
@@ -59,10 +54,8 @@ COUPLING_STRENGTH = 1.3
 NOISE_STD = 0.15   # rumore continuo -- necessario per "esplorare" le alternative
 
 
-
 def F(u):
     return np.clip(u, 0, r_max)
-
 
 
 def run_trial(stim_center_A, weights, seed_noise):
@@ -72,10 +65,10 @@ def run_trial(stim_center_A, weights, seed_noise):
     stim_profile = stim_strength * np.exp(-circ_dist(x-stim_center_A)**2/(2*stim_width**2))
     rng = np.random.RandomState(seed_noise)
 
-   for step in range(n_steps):
-       I_ext_A = stim_profile if step < stim_duration_steps else 0.0
-       rec_A = J_exc @ rA / N - global_inhib*rA.mean()
-       rA = rA + dt*(-rA + F(rec_A + I_ext_A)) / tau
+    for step in range(n_steps):
+        I_ext_A = stim_profile if step < stim_duration_steps else 0.0
+        rec_A = J_exc @ rA / N - global_inhib*rA.mean()
+        rA = rA + dt*(-rA + F(rec_A + I_ext_A)) / tau
 
         cross_input = np.zeros(N)
         if rA.max() > 0.5:
@@ -92,10 +85,8 @@ def run_trial(stim_center_A, weights, seed_noise):
     if rB.max() < 0.5:
         return None
     winner_pos = x[np.argmax(rB)]
-    dists = [circ_dist(winner_pos - ((stim_center_A+off) % 1.0)) for off in
-CANDIDATE_OFFSETS]
+    dists = [circ_dist(winner_pos - ((stim_center_A+off) % 1.0)) for off in CANDIDATE_OFFSETS]
     return int(np.argmin(dists))
-
 
 
 # ---------------------------------------------------------------
@@ -103,13 +94,13 @@ CANDIDATE_OFFSETS]
 # (regola esterna, il sistema non la conosce, deve scoprirla per
 # tentativi)
 # ---------------------------------------------------------------
-CORRECT_CANDIDATE = 1 # candidato 2 (indice 1) e' quello "giusto"
+CORRECT_CANDIDATE = 1  # candidato 2 (indice 1) e' quello "giusto"
 LEARNING_RATE = 0.15
 N_TRIALS = 60
 STIM_CENTER = 0.3
 
-weights = np.array([0.5, 0.5, 0.5])   # si parte da pesi UGUALI, nessuna preferenza
-weight_history = [weights.copy()]
+weights = np.array([0.5, 0.5, 0.5])  # si parte da pesi UGUALI, nessuna preferenza
+weight_history = [weights.copy()]
 choices = []
 rewards = []
 
@@ -124,15 +115,15 @@ for trial in range(N_TRIALS):
         continue
     reward = 1.0 if winner == CORRECT_CANDIDATE else 0.0
     weights[winner] += LEARNING_RATE * (reward - weights[winner])
-    weights = np.clip(weights, 0.05, 2.0) # evita pesi negativi o instabili
+    weights = np.clip(weights, 0.05, 2.0)  # evita pesi negativi o instabili
 
-   choices.append(winner)
-   rewards.append(reward)
-   weight_history.append(weights.copy())
+    choices.append(winner)
+    rewards.append(reward)
+    weight_history.append(weights.copy())
 
-   if trial % 10 == 0 or trial == N_TRIALS-1:
-       print(f"Prova {trial+1:3d}: scelto candidato {winner+1}, "
-             f"ricompensa={reward:.0f}, pesi ora={np.round(weights,3)}")
+    if trial % 10 == 0 or trial == N_TRIALS-1:
+        print(f"Prova {trial+1:3d}: scelto candidato {winner+1}, "
+              f"ricompensa={reward:.0f}, pesi ora={np.round(weights,3)}")
 
 weight_history = np.array(weight_history)
 choices = np.array(choices)
@@ -147,3 +138,33 @@ print(f"\nAccuratezza nelle prime {window} prove: "
 print(f"Accuratezza nelle ultime {window} prove: "
       f"{np.mean(choices[-window:]==CORRECT_CANDIDATE)*100:.0f}%")
 print(f"Pesi finali: {np.round(weights,3)} "
+      f"(il candidato corretto, {CORRECT_CANDIDATE+1}, dovrebbe avere il peso piu alto)")
+
+# ---------------------------------------------------------------
+# VISUALIZZAZIONE
+# ---------------------------------------------------------------
+fig, axes = plt.subplots(1, 2, figsize=(13, 5))
+
+for i in range(3):
+    axes[0].plot(weight_history[:, i], label=f'Peso candidato {i+1}'
+                 + (' (corretto)' if i == CORRECT_CANDIDATE else ''),
+                 linewidth=2 if i == CORRECT_CANDIDATE else 1.2)
+axes[0].set_xlabel('Numero di prova')
+axes[0].set_ylabel('Peso associativo')
+axes[0].set_title('Evoluzione dei pesi durante il training')
+axes[0].legend(loc='upper left', fontsize=8)
+axes[0].grid(alpha=0.3)
+
+axes[1].plot(accuracy_curve, color='#2ecc71', linewidth=1.5)
+axes[1].axhline(1/3, color='gray', linestyle='--', linewidth=1,
+                 label='livello casuale (1/3)')
+axes[1].set_xlabel('Numero di prova')
+axes[1].set_ylabel(f'Accuratezza (media mobile su {window} prove)')
+axes[1].set_title('Curva di apprendimento: la scelta corretta diventa piu\' frequente')
+axes[1].legend(loc='lower right', fontsize=8)
+axes[1].grid(alpha=0.3)
+axes[1].set_ylim(-0.05, 1.05)
+
+plt.tight_layout()
+plt.savefig('rl_bandit.png', dpi=150)
+print("\nGrafico salvato in rl_bandit.png")

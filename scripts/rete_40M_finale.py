@@ -1,7 +1,3 @@
-# ATTENZIONE: script troncato nel PDF originale del resoconto esteso.
-# La versione integrale era allegata separatamente come file .py e non e' disponibile.
-# Estratto automaticamente da resoconto_progetto_ESTESO.pdf (pdftotext); possibili artefatti di formattazione.
-
 """
 ESPERIMENTO FINALE: 40 MILIONI DI NEURONI (57.1% di un cervello di topo)
 ================================================================================
@@ -41,7 +37,7 @@ print("Questo passaggio da solo richiede diversi minuti. Non interrompere.")
 start_scope()
 
 N = 40_000_000
-N_E = int(N * 0.8)
+N_E = int(N * 0.8)
 N_I = N - N_E
 
 a = 0.02/ms
@@ -97,14 +93,15 @@ print("Burn-in completato.")
 # MONITOR (leggeri, per non esaurire la memoria)
 # ---------------------------------------------------------------
 rate_mon = PopulationRateMonitor(neurons)
-raster_subset = SpikeMonitor(neurons[:2000], record=True) # solo 2000 su 40M
+raster_subset = SpikeMonitor(neurons[:2000], record=True)  # solo 2000 su 40M
 
 # ---------------------------------------------------------------
 # BASELINE
 # ---------------------------------------------------------------
 run(200*ms)
 print("Baseline registrata.")
-# ---------------------------------------------------------------
+
+# ---------------------------------------------------------------
 # STIMOLO: 0.5% dei neuroni eccitatori (~160.000 su 32 milioni)
 # ---------------------------------------------------------------
 N_STIM = int(N_E * 0.005)
@@ -131,3 +128,42 @@ baseline_rate = r[(t > 200) & (t < 400)].mean()
 peak_rate = r[(t >= 400) & (t < 450)].max()
 recovery_rate = r[t > 650].mean()
 
+MOUSE_BRAIN_NEURONS = 70_000_000
+pct_mouse = 100 * N / MOUSE_BRAIN_NEURONS
+
+print("\n" + "=" * 60)
+print("RISULTATI FINALI")
+print("=" * 60)
+print(f"Scala della rete: {N:,} neuroni ({pct_mouse:.1f}% di un cervello di topo)")
+print(f"Frequenza baseline: {baseline_rate:.2f} Hz")
+print(f"Picco dopo lo stimolo: {peak_rate:.2f} Hz")
+print(f"Frequenza dopo il recovery: {recovery_rate:.2f} Hz")
+if abs(recovery_rate - baseline_rate) < 3:
+    print(">>> La rete e' tornata al livello di attivita' di partenza "
+          "anche a questa scala. <<<")
+
+# ---------------------------------------------------------------
+# VISUALIZZAZIONE
+# ---------------------------------------------------------------
+figure(figsize=(11, 7))
+
+subplot(2, 1, 1)
+plot(raster_subset.t/ms, raster_subset.i, '.', color='C0', markersize=2)
+axvspan(stim_time/ms, (stim_time+20*ms)/ms, color='red', alpha=0.15)
+ylabel('Indice neurone\n(sottoinsieme di 2000 su 40M)')
+title(f'Raster di un sottoinsieme -- rete a {N:,} neuroni '
+      f'({pct_mouse:.1f}% di un cervello di topo)')
+
+subplot(2, 1, 2)
+plot(t, r, color='black', linewidth=1)
+axvspan(stim_time/ms, (stim_time+20*ms)/ms, color='red', alpha=0.15, label='stimolo')
+axhline(baseline_rate, color='gray', linestyle='--', linewidth=1, label='baseline')
+xlabel('Tempo (ms)')
+ylabel('Frequenza INTERA popolazione (Hz)')
+title(f'Risposta collettiva di tutti i {N:,} neuroni allo stimolo')
+legend(loc='upper right', fontsize=8)
+grid(alpha=0.3)
+
+tight_layout()
+savefig('rete_40M_finale.png', dpi=150)
+print("\nGrafico salvato in rete_40M_finale.png")

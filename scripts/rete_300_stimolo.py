@@ -1,10 +1,6 @@
-# ATTENZIONE: script troncato nel PDF originale del resoconto esteso.
-# La versione integrale era allegata separatamente come file .py e non e' disponibile.
-# Estratto automaticamente da resoconto_progetto_ESTESO.pdf (pdftotext); possibili artefatti di formattazione.
-
 """
 RETE A 300 NEURONI: assestamento, attivita' spontanea e risposta a uno stimolo
-================================================================================
+================================================================================
 Tre miglioramenti rispetto allo script precedente:
 
 1. BURN-IN: facciamo "girare a vuoto" la rete per 200ms prima di iniziare
@@ -66,7 +62,8 @@ bg_syn.connect(j='i')
 p_conn = 0.1
 w_exc = 1.0*mV
 w_inh = 4.0*mV
-syn_ee = Synapses(E, E, on_pre='v_post += w_exc')
+
+syn_ee = Synapses(E, E, on_pre='v_post += w_exc')
 syn_ee.connect(condition='i!=j', p=p_conn)
 syn_ei = Synapses(E, I_pop, on_pre='v_post += w_exc')
 syn_ei.connect(p=p_conn)
@@ -111,3 +108,58 @@ print(f"Stimolo applicato a {N_STIM} neuroni eccitatori (20ms di impulso).")
 run(280*ms)
 print("Fase di recovery completata.")
 
+# ---------------------------------------------------------------
+# ANALISI
+# ---------------------------------------------------------------
+r = array(rate_mon.smooth_rate(window='flat', width=5*ms)/Hz)
+t = array(rate_mon.t/ms)
+
+baseline_rate = r[(t > 200) & (t < 400)].mean()
+peak_rate = r[(t >= 400) & (t < 450)].max()
+recovery_rate = r[t > 650].mean()
+
+print("\n" + "=" * 55)
+print("RISULTATI")
+print("=" * 55)
+print(f"Frequenza baseline (prima dello stimolo): {baseline_rate:.2f} Hz")
+print(f"Picco di frequenza dopo lo stimolo:        {peak_rate:.2f} Hz")
+print(f"Frequenza finale (dopo il recovery):       {recovery_rate:.2f} Hz")
+if abs(recovery_rate - baseline_rate) < 3:
+    print(">>> La rete e' tornata al livello di attivita' di partenza. <<<")
+
+# ---------------------------------------------------------------
+# VISUALIZZAZIONE
+# ---------------------------------------------------------------
+figure(figsize=(11, 8))
+
+subplot(2, 1, 1)
+exc_mask = spikes.i < N_E
+stim_mask = spikes.i < N_STIM   # i 20 neuroni stimolati, sottoinsieme di E
+
+# neuroni normali
+plot(spikes.t[exc_mask & ~stim_mask]/ms, spikes.i[exc_mask & ~stim_mask], '.',
+     color='C0', markersize=2, label=f'Eccitatori (n={N_E-N_STIM})')
+plot(spikes.t[~exc_mask]/ms, spikes.i[~exc_mask], '.',
+     color='C3', markersize=2, label=f'Inibitori (n={N_I})')
+# i 20 neuroni stimolati, evidenziati
+plot(spikes.t[stim_mask]/ms, spikes.i[stim_mask], '.',
+     color='gold', markersize=4, label=f'Stimolati (n={N_STIM})')
+
+axvspan(stim_time/ms, (stim_time+20*ms)/ms, color='red', alpha=0.15)
+ylabel('Indice neurone')
+title('Raster: attivita\' spontanea, poi stimolo (fascia rossa), poi recovery')
+legend(loc='upper right', markerscale=4, fontsize=8)
+
+subplot(2, 1, 2)
+plot(t, r, color='black', linewidth=1)
+axvspan(stim_time/ms, (stim_time+20*ms)/ms, color='red', alpha=0.15, label='stimolo')
+axhline(baseline_rate, color='gray', linestyle='--', linewidth=1, label='baseline')
+xlabel('Tempo (ms)')
+ylabel('Frequenza popolazione (Hz)')
+title('Risposta collettiva della rete allo stimolo')
+legend(loc='upper right', fontsize=8)
+grid(alpha=0.3)
+
+tight_layout()
+savefig('rete_300_stimolo.png', dpi=150)
+print("\nGrafico salvato in rete_300_stimolo.png")

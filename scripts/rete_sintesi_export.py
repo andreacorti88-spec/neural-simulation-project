@@ -1,7 +1,3 @@
-# ATTENZIONE: script troncato nel PDF originale del resoconto esteso.
-# La versione integrale era allegata separatamente come file .py e non e' disponibile.
-# Estratto automaticamente da resoconto_progetto_ESTESO.pdf (pdftotext); possibili artefatti di formattazione.
-
 """
 SINTESI FINALE: struttura spaziale + sinapsi realistiche + scala massima
 ============================================================================
@@ -18,7 +14,7 @@ progetto in un'unica rete:
      il modello biofisico standard in letteratura
 
   3. DENSITA' SINAPTICA REALISTICA: ~2600 sinapsi per neurone, la stessa
-    densita' media del modello Allen Institute (il piu' avanzato al mondo)
+     densita' media del modello Allen Institute (il piu' avanzato al mondo)
 
 La scala (118.000 neuroni) resta la stessa del precedente esperimento con
 sinapsi realistiche, perche' e' dettata dallo stesso vincolo di memoria
@@ -46,7 +42,6 @@ import time as pytime
 print("Fase 1/4: generazione della forma 3D del cervello (118.000 punti)...")
 
 
-
 def sample_brain_shape(n_target):
     points = []
     total = 0
@@ -60,7 +55,6 @@ def sample_brain_shape(n_target):
         points.append(pts)
         total += len(pts)
     return np.vstack(points)[:n_target]
-
 
 
 N = 118_000
@@ -83,7 +77,8 @@ for start in range(0, N, batch_size):
     _, neigh = tree.query(pts[start:end], k=K_LOCAL+1, workers=-1)
     all_neigh[start:end] = neigh[:, 1:].astype(np.int32)
 print(f"Connettivita' locale calcolata in {pytime.time()-t0:.1f}s.")
-src_local = np.repeat(np.arange(N), K_LOCAL)
+
+src_local = np.repeat(np.arange(N), K_LOCAL)
 tgt_local = all_neigh.flatten()
 src_far = np.repeat(np.arange(N), K_FAR)
 tgt_far = np.random.randint(0, N, size=N*K_FAR)
@@ -91,7 +86,7 @@ src_all = np.concatenate([src_local, src_far])
 tgt_all = np.concatenate([tgt_local, tgt_far])
 valid = src_all != tgt_all
 src_all, tgt_all = src_all[valid], tgt_all[valid]
-del src_local, tgt_local, src_far, tgt_far, all_neigh     # libera memoria
+del src_local, tgt_local, src_far, tgt_far, all_neigh  # libera memoria
 
 print(f"Connessioni totali generate: {len(src_all):,} "
       f"({len(src_all)/N:.0f} per neurone)")
@@ -133,3 +128,144 @@ w_e = 0.12/second   # ridotto rispetto al tentativo precedente (0.22): a piena
 w_i = 0.6/second     # ridotto in proporzione (da 0.9)
 
 src_is_E = src_all < N_E
+syn_exc = Synapses(neurons, neurons, on_pre='ge_post += w_e')
+syn_exc.connect(i=src_all[src_is_E], j=tgt_all[src_is_E])
+syn_inh = Synapses(neurons, neurons, on_pre='gi_post += w_i')
+syn_inh.connect(i=src_all[~src_is_E], j=tgt_all[~src_is_E])
+
+n_syn_total = len(syn_exc) + len(syn_inh) + len(bg_syn)
+print(f"Rete costruita. Sinapsi totali: {n_syn_total:,} "
+      f"({n_syn_total/N:.0f}/neurone)")
+
+net = Network(collect())
+
+print("\nFase 4/4: simulazione (burn-in + baseline + stimolo + recovery)...")
+t0 = pytime.time()
+net.run(200*ms)
+print(f"Burn-in completato in {pytime.time()-t0:.1f}s.")
+
+rate_mon = PopulationRateMonitor(neurons)
+raster_subset = SpikeMonitor(neurons[:1500], record=True)
+full_spikes = SpikeMonitor(neurons, record=True)  # per l'esportazione 3D
+net.add(rate_mon, raster_subset, full_spikes)
+
+t0 = pytime.time()
+net.run(200*ms)
+print(f"Baseline completata in {pytime.time()-t0:.1f}s.")
+
+# stimolo localizzato vicino alla punta dell'emisfero sinistro
+target = np.array([-0.85, 0.0, 0.0])
+d_target = np.linalg.norm(pts[:N_E] - target, axis=1)
+stim_idx = np.argsort(d_target)[:200]
+stim_time = 400*ms
+neurons.I_ext[stim_idx] = 40*mV/ms
+net.run(15*ms)
+neurons.I_ext[stim_idx] = 0*mV/ms
+print(f"Stimolo applicato a {len(stim_idx)} neuroni vicino alla punta "
+      f"dell'emisfero sinistro.")
+
+t0 = pytime.time()
+net.run(200*ms)
+print(f"Recovery completata in {pytime.time()-t0:.1f}s.")
+
+# ---------------------------------------------------------------
+# ANALISI
+# ---------------------------------------------------------------
+r = np.array(rate_mon.smooth_rate(window='flat', width=5*ms)/Hz)
+t = np.array(rate_mon.t/ms)
+
+baseline_rate = r[(t > 200) & (t < 400)].mean()
+peak_rate = r[(t >= 400) & (t < 450)].max()
+recovery_rate = r[t > 590].mean()
+amplitude_early = r[(t > 200) & (t < 300)]
+amplitude_late = r[(t > 500) & (t < 615)]
+
+print("\n" + "=" * 60)
+print("RISULTATI FINALI")
+print("=" * 60)
+print(f"Scala: {N:,} neuroni, {n_syn_total:,} sinapsi ({n_syn_total/N:.0f}/neurone)")
+print(f"Struttura: spaziale (small-world 3D, forma a cervello)")
+print(f"Sinapsi: a conduttanza (biofisicamente realistiche)")
+print(f"Frequenza baseline: {baseline_rate:.2f} Hz")
+print(f"Picco dopo lo stimolo: {peak_rate:.2f} Hz")
+print(f"Frequenza dopo il recovery: {recovery_rate:.2f} Hz")
+print(f"Ampiezza oscillazione (200-300ms): "
+      f"{amplitude_early.max()-amplitude_early.min():.2f} Hz")
+print(f"Ampiezza oscillazione (500-615ms): "
+      f"{amplitude_late.max()-amplitude_late.min():.2f} Hz")
+
+# ---------------------------------------------------------------
+# ESPORTAZIONE DATI PER LA VISUALIZZAZIONE 3D INTERATTIVA
+# ---------------------------------------------------------------
+print("\nEsportazione dati per la visualizzazione 3D...")
+import json
+
+render_stride = 15  # ~7.870 neuroni renderizzati su 118.000
+render_idx = np.arange(0, N, render_stride)
+
+t_arr = np.array(full_spikes.t/ms)
+i_arr = np.array(full_spikes.i)
+print(f"Spike totali registrati: {len(t_arr):,}")
+
+render_mask = np.isin(i_arr, render_idx)
+t_render = t_arr[render_mask]
+i_render = i_arr[render_mask]
+
+frame_bins = np.arange(200, 616, 4)
+frames = []
+for k in range(len(frame_bins)-1):
+    mask = (t_render >= frame_bins[k]) & (t_render < frame_bins[k+1])
+    active_global = i_render[mask]
+    active_local = np.searchsorted(render_idx, active_global)
+    frames.append(active_local.tolist())
+
+# garantisci che i neuroni stimolati siano visibili anche nel sottoinsieme
+stim_idx_local = np.searchsorted(render_idx, np.intersect1d(stim_idx, render_idx))
+if len(stim_idx_local) < 10:
+    positions_render_tmp = pts[render_idx]
+    dists_to_stim = np.linalg.norm(positions_render_tmp - target, axis=1)
+    nearest = np.argsort(dists_to_stim)[:15]
+    stim_idx_local = np.union1d(stim_idx_local, nearest)
+
+export = {
+    "positions": (pts[render_idx] * 100).tolist(),
+    "stim_indices_local": stim_idx_local.tolist(),
+    "frame_duration_ms": 4,
+    "frame_start_ms": 200,
+    "stim_time_ms": float(stim_time/ms),
+    "n_neurons_total": N,
+    "n_synapses_per_neuron": round(n_syn_total/N),
+    "frames": frames,
+}
+with open('rete_sintesi_3d_data.json', 'w') as f:
+    json.dump(export, f)
+
+import os
+print(f"Dati esportati: {len(frames)} frame, {len(render_idx):,} neuroni renderizzati")
+print(f"Dimensione file: {os.path.getsize('rete_sintesi_3d_data.json')/1024:.0f} KB")
+
+# ---------------------------------------------------------------
+# VISUALIZZAZIONE
+# ---------------------------------------------------------------
+figure(figsize=(11, 7))
+
+subplot(2, 1, 1)
+plot(raster_subset.t/ms, raster_subset.i, '.', color='C0', markersize=1.5)
+axvspan(stim_time/ms, (stim_time+15*ms)/ms, color='red', alpha=0.15)
+ylabel('Indice neurone\n(sottoinsieme di 1500)')
+title(f'Rete a {N:,} neuroni -- spaziale + sinapsi realistiche + '
+      f'{n_syn_total/N:.0f} sinapsi/neurone')
+
+subplot(2, 1, 2)
+plot(t, r, color='black', linewidth=1)
+axvspan(stim_time/ms, (stim_time+15*ms)/ms, color='red', alpha=0.15, label='stimolo')
+axhline(baseline_rate, color='gray', linestyle='--', linewidth=1, label='baseline')
+xlabel('Tempo (ms)')
+ylabel('Frequenza popolazione (Hz)')
+title('Risposta collettiva della rete allo stimolo')
+legend(loc='upper right', fontsize=8)
+grid(alpha=0.3)
+
+tight_layout()
+savefig('rete_sintesi_finale.png', dpi=150)
+print("\nGrafico salvato in rete_sintesi_finale.png")

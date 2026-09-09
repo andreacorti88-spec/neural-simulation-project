@@ -1,10 +1,8 @@
-# Estratto automaticamente da resoconto_progetto_ESTESO.pdf (pdftotext); possibili artefatti di formattazione.
-
 """
 DUE NEURONI COLLEGATI DA UNA SINAPSI
 =====================================
 Modello: Izhikevich (2003) — scelto perché con poche equazioni riproduce
-il comportamento realistico di un neurone (soglia, spike, refrattarietà)
+il comportamento realistico di un neurone (soglia, spike, refrattarietà)
 senza la complessità completa di Hodgkin-Huxley. Ottimo punto di partenza.
 
 Cosa succede in questo script:
@@ -45,7 +43,7 @@ I : volt/second
 # 2. CREAZIONE DEI DUE NEURONI (un unico gruppo di 2)
 # ---------------------------------------------------------------
 # threshold='v > 30*mV' : quando il potenziale supera 30 mV, è uno spike
-# reset='v = c; u += d' : dopo lo spike, il potenziale torna a riposo
+# reset='v = c; u += d'  : dopo lo spike, il potenziale torna a riposo
 neurons = NeuronGroup(2, eqs, threshold='v > 30*mV', reset='v = c; u += d',
                        method='euler')
 neurons.v = -65*mV   # entrambi partono a riposo
@@ -66,7 +64,8 @@ neurons.I = [15*mV/ms, 0*mV/ms]
 syn = Synapses(neurons, neurons, on_pre='v_post += 20*mV')
 syn.connect(i=0, j=1)   # collega neurone 0 (A) -> neurone 1 (B)
 syn.delay = 1.5*ms
-# ---------------------------------------------------------------
+
+# ---------------------------------------------------------------
 # 4. MONITORAGGIO E SIMULAZIONE
 # ---------------------------------------------------------------
 mon = StateMonitor(neurons, 'v', record=True)
@@ -98,30 +97,3 @@ savefig('due_neuroni_output.png', dpi=150)
 print("Simulazione completata. Grafico salvato in due_neuroni_output.png")
 print(f"Numero di spike del Neurone A: {sum(spikes.i == 0)}")
 print(f"Numero di spike del Neurone B: {sum(spikes.i == 1)}")
-2.2 Soglia sinaptica
-Il secondo esperimento esplora sistematicamente un parametro che nel primo esperimento era
-fissato arbitrariamente: quanto deve essere forte una sinapsi perche' B risponda? Facendo
-variare l'intensita' della sinapsi tra 2 e 30 millivolt (mantenendo tutto il resto identico), si
-osserva una transizione netta e non lineare:
-
- Intensita' sinapsi (mV)               Spike di A                              Spike di B
- 2                                     10                                      0
- 5                                     10                                      0
- 10                                    10                                      0
- 20                                    10                                      3
- 30                                    10                                      7
-
-
-
-Sotto i 10-15 millivolt il neurone B non risponde mai, indipendentemente da quante volte A
-spari; sopra questa soglia, B risponde con una frequenza crescente in modo pressoche'
-monotono. Questo dimostra concretamente il concetto di soglia di attivazione -- un fenomeno
-intrinsecamente non lineare, non un semplice effetto proporzionale (raddoppiare l'intensita'
-della sinapsi da 5 a 10 mV non produce alcun cambiamento misurabile; raddoppiarla da 10 a 20
-mV produce un cambiamento drastico, da zero risposta a risposta sostanziale).
-
-
-
-
-                            Fig. 2 — Soglia sinaptica: transizione netta tra 10 e 20 mV.
-

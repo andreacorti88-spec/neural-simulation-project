@@ -1,9 +1,5 @@
-# ATTENZIONE: script troncato nel PDF originale del resoconto esteso.
-# La versione integrale era allegata separatamente come file .py e non e' disponibile.
-# Estratto automaticamente da resoconto_progetto_ESTESO.pdf (pdftotext); possibili artefatti di formattazione.
-
 """
-PLASTICITA' SINAPTICA: facilitazione a breve termine
+PLASTICITA' SINAPTICA: facilitazione a breve termine
 ========================================================
 Finora la sinapsi tra A e B aveva sempre la stessa intensita'.
 Qui la facciamo CAMBIARE in base all'uso: e' il primo passo,
@@ -66,7 +62,7 @@ syn = Synapses(neurons, neurons, model=synapse_eqs,
 syn.connect(i=0, j=1)
 syn.delay = 1.5*ms
 syn.g = 8*mV                      # peso iniziale (sotto soglia da solo)
-syn.g_base = 8*mV                 # valore a cui 'g' decade se A non spara
+syn.g_base = 8*mV                 # valore a cui 'g' decade se A non spara
 syn.tau_facilitation = 50*ms      # tempo caratteristico di decadimento
 syn.facilitation_increment = 6*mV # quanto si rafforza ad ogni spike
 
@@ -92,3 +88,25 @@ legend(loc='upper right', fontsize=8)
 title('Potenziale di membrana')
 
 subplot(3, 1, 2)
+plot(g_mon.t/ms, g_mon.g[0]/mV, color='green')
+ylabel('Peso sinaptico g (mV)')
+title('Come cambia l\'intensita\' della sinapsi nel tempo (facilitazione)')
+
+subplot(3, 1, 3)
+plot(spikes.t[spikes.i == 0]/ms, [0]*sum(spikes.i == 0), 'o', color='C0', label='A')
+plot(spikes.t[spikes.i == 1]/ms, [1]*sum(spikes.i == 1), 'o', color='C1', label='B')
+yticks([0, 1], ['A', 'B'])
+xlabel('Tempo (ms)')
+title('Raster degli spike')
+legend(loc='upper right', fontsize=8)
+
+tight_layout()
+savefig('plasticita_sinaptica.png', dpi=150)
+
+print("Simulazione completata. Grafico salvato in plasticita_sinaptica.png")
+print(f"Spike di A: {sum(spikes.i == 0)}")
+print(f"Spike di B: {sum(spikes.i == 1)}")
+print(f"Peso sinaptico iniziale: {syn.g[0]/mV:.1f} mV (osserva come sale nel grafico centrale)")
+print("\nOsservazione chiave: i primi spike di A potrebbero non bastare a far")
+print("sparare B (sinapsi ancora 'debole'), ma dopo alcuni spike ravvicinati")
+print("la sinapsi si e' rafforzata abbastanza da far scattare B.")

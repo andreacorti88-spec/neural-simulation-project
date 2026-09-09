@@ -1,7 +1,3 @@
-# ATTENZIONE: script troncato nel PDF originale del resoconto esteso.
-# La versione integrale era allegata separatamente come file .py e non e' disponibile.
-# Estratto automaticamente da resoconto_progetto_ESTESO.pdf (pdftotext); possibili artefatti di formattazione.
-
 """
 PICCOLA RETE: propagazione del segnale su una catena di neuroni
 ====================================================================
@@ -19,7 +15,7 @@ Cosa possiamo osservare che con 2 neuroni non si vedeva:
      fenomeno reale nei circuiti neurali biologici
   3. Con connessioni piu' complesse (non solo a catena) iniziano
      a comparire fenomeni come sincronizzazione o feedback
-"""
+"""
 
 from brian2 import *
 
@@ -34,7 +30,7 @@ du/dt = a*(b*v - u) : volt/second
 I : volt/second
 '''
 
-N = 8   # numero di neuroni nella catena
+N = 8  # numero di neuroni nella catena
 
 start_scope()
 
@@ -82,3 +78,14 @@ print("-" * 45)
 for idx in range(N):
     spike_times = spikes.t[spikes.i == idx]/ms
     n_spikes = len(spike_times)
+    first = f"{spike_times[0]:.1f}" if n_spikes > 0 else "mai"
+    print(f"{'N'+str(idx):>10} | {n_spikes:>10} | {first:>18}")
+
+if len(spikes.t[spikes.i == N-1]) == 0:
+    print(f"\nIl segnale NON e' arrivato fino all'ultimo neurone (N{N-1}).")
+    print("Prova ad aumentare l'intensita' sinaptica (22*mV -> es. 26*mV)")
+    print("nella riga 'on_pre' per vedere cosa serve perche' arrivi in fondo.")
+else:
+    delay_totale = spikes.t[spikes.i == N-1][0]/ms - spikes.t[spikes.i == 0][0]/ms
+    print(f"\nIl segnale e' arrivato fino a N{N-1}.")
+    print(f"Ritardo totale accumulato dal primo all'ultimo neurone: {delay_totale:.1f} ms")
