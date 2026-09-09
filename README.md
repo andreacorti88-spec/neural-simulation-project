@@ -6,7 +6,7 @@ Un percorso completo di simulazione neurale computazionale — dalla scala di un
 **Periodo:** Settembre 2026
 **Ambiente:** Python 3.14, Brian2 2.10.1, NumPy, SciPy, Matplotlib — MacBook Air M5, 24 GB RAM
 
-![Rete a 118.000 neuroni](figures/rete_118000_neuroni_t200ms.png)
+![Rete a 118.000 neuroni](figures/rete_realistica_118K.png)
 
 ## Cosa contiene questo repository
 
