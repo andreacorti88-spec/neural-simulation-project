@@ -1,37 +1,14 @@
 """
-SINTESI FINALE: struttura spaziale + sinapsi realistiche + scala massima
-============================================================================
-Questo esperimento unisce i tre miglioramenti sviluppati separatamente nel
-progetto in un'unica rete:
+Unione dei tre assi sviluppati separatamente: struttura spaziale 3D a due
+lobi con connettivita' dipendente dalla distanza (KD-tree, densa in loco +
+shortcut a lungo raggio), sinapsi a conduttanza (rete_realistica_118K), densita'
+~2600 sinapsi/neurone livello Allen Institute. Scala invariata a 118K rispetto
+all'esperimento precedente (stesso tetto di memoria, ~307M sinapsi su 24GB) --
+qui cambia la struttura delle connessioni (spaziale vs casuale), non il numero.
 
-  1. STRUTTURA SPAZIALE (sezione 4.1-4.2): i neuroni sono disposti in una
-     forma 3D a due lobi (emisferi), con connettivita' che dipende dalla
-     distanza -- densa localmente, rara a lungo raggio -- calcolata
-     efficientemente con un KD-tree
-
-  2. SINAPSI REALISTICHE (esperimento precedente): non piu' semplici "salti
-     di tensione", ma sinapsi a conduttanza con potenziale di inversione,
-     il modello biofisico standard in letteratura
-
-  3. DENSITA' SINAPTICA REALISTICA: ~2600 sinapsi per neurone, la stessa
-     densita' media del modello Allen Institute (il piu' avanzato al mondo)
-
-La scala (118.000 neuroni) resta la stessa del precedente esperimento con
-sinapsi realistiche, perche' e' dettata dallo stesso vincolo di memoria
-(circa 307 milioni di sinapsi e' il tetto pratico sui tuoi 24 GB di RAM
-con questo tipo di sinapsi) -- qui la STRUTTURA delle connessioni cambia
-(spaziale invece che casuale), non il numero totale.
-
-AVVERTENZA IMPORTANTE (dall'esperimento precedente): questa densita' di
-connessione produce un\'attivita\' di rete che NON si stabilizza mai del
-tutto in uno stato quieto -- l\'ampiezza delle oscillazioni spontanee
-cresce di nuovo dopo essersi inizialmente smorzata, un comportamento
-verificato su piu' prove indipendenti. Non e\' un errore, e' una proprieta\'
-osservata di reti con questa densita\' di connessione ricorrente.
-
-TEMPO ATTESO: in base ai test di calibrazione, l'esperimento completo
-(costruzione + burn-in + baseline + stimolo + recovery) dovrebbe richiedere
-tra i 25 e i 50 minuti, in base a quanto interviene il throttling termico.
+Nota: a questa densita' l'attivita' non si stabilizza mai del tutto -- le
+oscillazioni spontanee ricrescono dopo uno smorzamento iniziale, comportamento
+riproducibile su piu' run indipendenti, non un errore di calibrazione.
 """
 
 from brian2 import *
@@ -86,7 +63,7 @@ src_all = np.concatenate([src_local, src_far])
 tgt_all = np.concatenate([tgt_local, tgt_far])
 valid = src_all != tgt_all
 src_all, tgt_all = src_all[valid], tgt_all[valid]
-del src_local, tgt_local, src_far, tgt_far, all_neigh  # libera memoria
+del src_local, tgt_local, src_far, tgt_far, all_neigh
 
 print(f"Connessioni totali generate: {len(src_all):,} "
       f"({len(src_all)/N:.0f} per neurone)")
@@ -121,11 +98,10 @@ background = PoissonGroup(N, rates=1200*Hz)
 bg_syn = Synapses(background, neurons, on_pre='ge_post += 15/second')
 bg_syn.connect(j='i')
 
-w_e = 0.12/second   # ridotto rispetto al tentativo precedente (0.22): a piena
-                      # scala e con clustering spaziale, i pesi calibrati sulla
-                      # rete puramente casuale risultavano troppo forti e
-                      # producevano oscillazioni crescenti invece di stabilizzarsi
-w_i = 0.6/second     # ridotto in proporzione (da 0.9)
+# ridotti rispetto a rete_realistica_118K (0.22/0.9): con clustering spaziale
+# i pesi calibrati sulla rete casuale erano troppo forti, oscillazioni crescenti
+w_e = 0.12/second
+w_i = 0.6/second
 
 src_is_E = src_all < N_E
 syn_exc = Synapses(neurons, neurons, on_pre='ge_post += w_e')
@@ -167,9 +143,6 @@ t0 = pytime.time()
 net.run(200*ms)
 print(f"Recovery completata in {pytime.time()-t0:.1f}s.")
 
-# ---------------------------------------------------------------
-# ANALISI
-# ---------------------------------------------------------------
 r = np.array(rate_mon.smooth_rate(window='flat', width=5*ms)/Hz)
 t = np.array(rate_mon.t/ms)
 
@@ -193,9 +166,6 @@ print(f"Ampiezza oscillazione (200-300ms): "
 print(f"Ampiezza oscillazione (500-615ms): "
       f"{amplitude_late.max()-amplitude_late.min():.2f} Hz")
 
-# ---------------------------------------------------------------
-# VISUALIZZAZIONE
-# ---------------------------------------------------------------
 figure(figsize=(11, 7))
 
 subplot(2, 1, 1)

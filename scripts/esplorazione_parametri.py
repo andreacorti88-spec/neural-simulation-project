@@ -1,15 +1,6 @@
 """
-ESPLORAZIONE PARAMETRI: delay sinaptico e intensita' della sinapsi
-====================================================================
-Eseguiamo la stessa simulazione (A -> B) piu' volte, cambiando:
-  - il delay sinaptico (quanto tempo impiega il segnale a "viaggiare")
-  - l'intensita' della sinapsi (quanto forte e' lo stimolo che B riceve)
-
-Cosi' vediamo concretamente:
-  1. Come il delay sposta nel tempo la risposta di B
-  2. Come, sotto una certa intensita', B smette del tutto di sparare
-     (concetto di SOGLIA SINAPTICA: se lo stimolo non basta a far
-     superare la soglia di attivazione, il neurone non risponde)
+Sweep su delay sinaptico e intensita' (A -> B): effetto sul timing di B
+e curva soglia (intensita' minima perche' B risponda).
 """
 
 from brian2 import *
@@ -26,9 +17,8 @@ I : volt/second
 '''
 
 def run_simulation(delay_ms, synapse_strength_mV):
-    """Esegue la simulazione con un dato delay e una data intensita' sinaptica.
-    Ritorna i tempi e gli indici degli spike (per A e B)."""
-    start_scope()  # resetta l'ambiente Brian2 tra una run e l'altra
+    """Ritorna tempi/indici degli spike (A e B) per un dato delay/intensita'."""
+    start_scope()
 
     neurons = NeuronGroup(2, eqs, threshold='v > 30*mV', reset='v = c; u += d',
                            method='euler')
@@ -46,9 +36,7 @@ def run_simulation(delay_ms, synapse_strength_mV):
     return spikes.t/ms, spikes.i, sum(spikes.i == 0), sum(spikes.i == 1)
 
 
-# ---------------------------------------------------------------
-# ESPERIMENTO 1: variare il delay sinaptico (intensita' fissa a 20 mV)
-# ---------------------------------------------------------------
+# sweep 1: delay sinaptico, intensita' fissa a 20 mV
 delays_to_test = [0.5, 1.5, 5.0, 10.0]
 
 figure(figsize=(10, 6))
@@ -67,9 +55,7 @@ tight_layout()
 savefig('esperimento_delay.png', dpi=150)
 print("Grafico 1 salvato: esperimento_delay.png")
 
-# ---------------------------------------------------------------
-# ESPERIMENTO 2: variare l'intensita' della sinapsi (delay fisso a 1.5 ms)
-# ---------------------------------------------------------------
+# sweep 2: intensita' sinaptica, delay fisso a 1.5 ms
 strengths_to_test = [2, 5, 10, 20, 30]
 
 print("\nEsperimento intensita' sinaptica:")

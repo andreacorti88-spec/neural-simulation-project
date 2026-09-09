@@ -1,24 +1,9 @@
 """
-APPRENDIMENTO PER RINFORZO: la rete impara QUALE alternativa scegliere
-====================================================================
-Estensione finale: i pesi delle tre mappe candidate A->B non sono piu'
-fissi. Ad ogni prova:
-  1. A viene stimolato, B compete tra i 3 candidati e sceglie un vincitore
-  2. Viene dato un segnale di RICOMPENSA: +1 se il vincitore e' quello
-     "corretto" (definito da noi, come una regola esterna fissa -- il
-     sistema non sa a priori quale sia), 0 altrimenti
-  3. Il peso del candidato SCELTO viene aggiornato verso la ricompensa
-     ricevuta (regola tipo Rescorla-Wagner / bandito multi-braccio):
-         peso_scelto += tasso_apprendimento * (ricompensa - peso_scelto)
-
-Nessun altro peso viene toccato -- il sistema impara SOLO dalle proprie
-scelte, non da un confronto esplicito con l'alternativa corretta.
-
-Questo e' un vero, piccolo ciclo di reinforcement learning: prova,
-osserva il risultato, aggiorna il comportamento futuro. E' il primo
-esperimento del progetto in cui il sistema non si limita a reagire o
-a propagare, ma MODIFICA IL PROPRIO COMPORTAMENTO in base a un
-risultato.
+Estensione di competing_targets: i pesi delle 3 mappe candidate diventano
+appresi, update tipo Rescorla-Wagner sul solo candidato scelto:
+w_scelto += lr*(reward - w_scelto), reward binario (1 se vince il candidato
+corretto, fissato esternamente e non noto al sistema). Nessun update sugli
+altri pesi -- solo credit assignment sulla propria scelta.
 """
 
 import numpy as np
@@ -51,7 +36,7 @@ J_exc = A_exc * np.exp(-d_matrix**2 / (2*sigma_exc**2))
 
 CANDIDATE_OFFSETS = [0.15, 0.45, 0.75]
 COUPLING_STRENGTH = 1.3
-NOISE_STD = 0.15   # rumore continuo -- necessario per "esplorare" le alternative
+NOISE_STD = 0.15   # necessario per esplorare le alternative (vedi competing_targets)
 
 
 def F(u):
@@ -89,17 +74,13 @@ def run_trial(stim_center_A, weights, seed_noise):
     return int(np.argmin(dists))
 
 
-# ---------------------------------------------------------------
-# CICLO DI TRAINING: il candidato "corretto" e' fissato a priori
-# (regola esterna, il sistema non la conosce, deve scoprirla per
-# tentativi)
-# ---------------------------------------------------------------
-CORRECT_CANDIDATE = 1  # candidato 2 (indice 1) e' quello "giusto"
+# candidato corretto fissato a priori, il sistema deve scoprirlo per tentativi
+CORRECT_CANDIDATE = 1  # candidato 2 (indice 1)
 LEARNING_RATE = 0.15
 N_TRIALS = 60
 STIM_CENTER = 0.3
 
-weights = np.array([0.5, 0.5, 0.5])  # si parte da pesi UGUALI, nessuna preferenza
+weights = np.array([0.5, 0.5, 0.5])  # pesi iniziali uguali
 weight_history = [weights.copy()]
 choices = []
 rewards = []
@@ -115,7 +96,7 @@ for trial in range(N_TRIALS):
         continue
     reward = 1.0 if winner == CORRECT_CANDIDATE else 0.0
     weights[winner] += LEARNING_RATE * (reward - weights[winner])
-    weights = np.clip(weights, 0.05, 2.0)  # evita pesi negativi o instabili
+    weights = np.clip(weights, 0.05, 2.0)  # evita pesi negativi/instabili
 
     choices.append(winner)
     rewards.append(reward)
@@ -140,9 +121,6 @@ print(f"Accuratezza nelle ultime {window} prove: "
 print(f"Pesi finali: {np.round(weights,3)} "
       f"(il candidato corretto, {CORRECT_CANDIDATE+1}, dovrebbe avere il peso piu alto)")
 
-# ---------------------------------------------------------------
-# VISUALIZZAZIONE
-# ---------------------------------------------------------------
 fig, axes = plt.subplots(1, 2, figsize=(13, 5))
 
 for i in range(3):

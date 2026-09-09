@@ -1,20 +1,7 @@
 """
-PICCOLA RETE: propagazione del segnale su una catena di neuroni
-====================================================================
-Finora avevamo solo A -> B. Qui costruiamo una catena di 8 neuroni:
-  N0 -> N1 -> N2 -> N3 -> N4 -> N5 -> N6 -> N7
-
-Solo N0 riceve stimolo esterno. Ogni neurone successivo si attiva
-SOLO se riceve abbastanza spinta da quello precedente.
-
-Cosa possiamo osservare che con 2 neuroni non si vedeva:
-  1. Il ritardo si ACCUMULA lungo la catena (ogni sinapsi aggiunge
-     il suo delay)
-  2. Se l'intensita' sinaptica e' troppo debole, il segnale puo'
-     "morire" a meta' catena (non arriva fino in fondo) — un
-     fenomeno reale nei circuiti neurali biologici
-  3. Con connessioni piu' complesse (non solo a catena) iniziano
-     a comparire fenomeni come sincronizzazione o feedback
+Catena N0->N1->...->N7, solo N0 stimolato esternamente.
+Verifica: accumulo del delay lungo la catena, e condizioni sotto cui
+il segnale si estingue prima di raggiungere N7.
 """
 
 from brian2 import *
@@ -30,7 +17,7 @@ du/dt = a*(b*v - u) : volt/second
 I : volt/second
 '''
 
-N = 8  # numero di neuroni nella catena
+N = 8
 
 start_scope()
 
@@ -39,27 +26,17 @@ neurons = NeuronGroup(N, eqs, threshold='v > 30*mV', reset='v = c; u += d',
 neurons.v = -65*mV
 neurons.u = b * neurons.v
 
-# Solo il primo neurone (indice 0) riceve stimolo esterno.
 neurons.I = 0*mV/ms
 neurons.I[0] = 20*mV/ms
 
-# ---------------------------------------------------------------
-# CONNESSIONI A CATENA: neurone i -> neurone i+1
-# ---------------------------------------------------------------
+# catena i -> i+1
 syn = Synapses(neurons, neurons, on_pre='v_post += 22*mV')
-# i, i+1 per i che va da 0 a N-2 (crea la catena 0->1->2->...->7)
 syn.connect(i=arange(N-1), j=arange(1, N))
 syn.delay = 1.5*ms
 
-# ---------------------------------------------------------------
-# MONITORAGGIO E SIMULAZIONE
-# ---------------------------------------------------------------
 spikes = SpikeMonitor(neurons)
 run(200*ms)
 
-# ---------------------------------------------------------------
-# VISUALIZZAZIONE
-# ---------------------------------------------------------------
 figure(figsize=(10, 5))
 plot(spikes.t/ms, spikes.i, 'o', markersize=8)
 yticks(range(N), [f'N{i}' for i in range(N)])
@@ -83,8 +60,7 @@ for idx in range(N):
 
 if len(spikes.t[spikes.i == N-1]) == 0:
     print(f"\nIl segnale NON e' arrivato fino all'ultimo neurone (N{N-1}).")
-    print("Prova ad aumentare l'intensita' sinaptica (22*mV -> es. 26*mV)")
-    print("nella riga 'on_pre' per vedere cosa serve perche' arrivi in fondo.")
+    print("Da alzare l'intensita' sinaptica (22*mV -> es. 26*mV) se serve arrivi in fondo.")
 else:
     delay_totale = spikes.t[spikes.i == N-1][0]/ms - spikes.t[spikes.i == 0][0]/ms
     print(f"\nIl segnale e' arrivato fino a N{N-1}.")

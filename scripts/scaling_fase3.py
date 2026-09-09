@@ -1,19 +1,8 @@
 """
-SCALING FASE 3: oltre i 25 milioni, con stima di memoria ricalibrata
-====================================================================
-Nella fase 2 hai raggiunto 25 milioni di neuroni (35.7% della scala
-di un cervello di topo) usando solo 11.2 GB di RAM -- molto meno dei
-18.7 GB che la stima precedente prevedeva. La mia stima era troppo
-prudente. Qui la ricalibro usando ANCHE questo nuovo dato reale, cosi'
-la previsione per le dimensioni successive e' piu' accurata.
-
-Due cambiamenti rispetto alla fase 2:
-  1. La regressione della memoria include ora il punto a 25M appena
-     misurato (6 punti invece di 5)
-  2. Il margine di sicurezza scende dal 30% al 15% (i dati reali
-     mostrano che la crescita della memoria e' piu' lenta del previsto)
-  3. Il limite di tempo per singolo tentativo sale da 5 a 25 minuti
-     (hai detto che sei disposto ad aspettare di piu')
+Scaling fase 3. Fase 2: 25M neuroni (35.7%), 11.2GB RAM -- sotto la stima
+precedente (18.7GB), la regressione era troppo prudente. Ricalibrata qui
+con il punto a 25M incluso (6 punti), margine di sicurezza ridotto al 15%,
+limite di tempo per run alzato da 5 a 25 minuti.
 """
 
 from brian2 import *
@@ -87,16 +76,13 @@ def run_network(N, K_local=15, sim_time=200*ms):
     return elapsed, n_synapses, n_spikes, mem_mb
 
 
-# ---------------------------------------------------------------
-# DATI OSSERVATI FINORA (fasi 1 e 2, sul tuo Mac) — 6 punti reali
-# ---------------------------------------------------------------
+# 6 punti osservati (fasi 1-2)
 N_observed = np.array([1_000_000, 3_000_000, 5_000_000, 10_000_000,
                         20_000_000, 25_000_000])
 mem_observed = np.array([1720, 4152, 6254, 9838, 11147, 11495])
 
 slope_mb_per_neuron, intercept = np.polyfit(N_observed, mem_observed, 1)
-SAFETY_FACTOR = 1.15   # margine ridotto, visto che i dati reali sono
-                        # risultati piu' bassi della stima precedente
+SAFETY_FACTOR = 1.15
 
 def predict_memory_mb(N):
     return SAFETY_FACTOR * (intercept + slope_mb_per_neuron * N)
@@ -120,7 +106,7 @@ for N in sizes_to_test:
     if predicted > MAX_SAFE_MEM_MB:
         print(f"{N:>12,} | {predicted:>11.0f}MB | -- SALTATO: supererebbe "
               f"la soglia di sicurezza ({MAX_SAFE_MEM_MB:.0f}MB) --")
-        print("\nMi fermo qui per non rischiare di bloccare il Mac.")
+        print("\nInterrotto per stare sotto la soglia di sicurezza.")
         break
 
     try:
@@ -132,7 +118,7 @@ for N in sizes_to_test:
         results.append((N, elapsed, mem))
 
         if elapsed > TIME_LIMIT_S:
-            print(f"\nTempo superiore a {TIME_LIMIT_S//60} minuti: mi fermo qui.")
+            print(f"\nTempo superiore a {TIME_LIMIT_S//60} minuti: interrotto.")
             break
     except MemoryError:
         print(f"{N:>12,} | MEMORIA ESAURITA -- questo e' il tuo limite pratico.")

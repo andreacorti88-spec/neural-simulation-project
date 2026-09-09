@@ -1,30 +1,9 @@
 """
-SCALING VERSO LA SCALA DI UN CERVELLO DI TOPO (~70 milioni di neuroni)
-====================================================================
-Un cervello di topo ha circa 70 milioni di neuroni. Simularlo per
-intero, con dettaglio biofisico, richiede risorse di calcolo che
-nessun laptop possiede (serve un cluster o un supercomputer).
-
-Questo script NON pretende di arrivarci. Fa una cosa piu' onesta e
-piu' utile: misura, passo dopo passo, qual e' il limite pratico REALE
-del tuo Mac -- quanti neuroni riesci a simulare prima che diventi
-troppo lento o richieda troppa memoria.
-
-DIFFERENZA IMPORTANTE rispetto agli script precedenti:
-Finora usavamo connettivita' a PROBABILITA' fissa (ogni coppia di
-neuroni ha una probabilita' p di essere connessa). Questo pero' fa
-crescere il numero di sinapsi come N^2 -- con un milione di neuroni,
-sarebbe un numero di sinapsi ingestibile.
-Qui usiamo connettivita' a GRADO FISSO: ogni neurone si connette
-esattamente a K altri neuroni scelti a caso (K=15 di default). Il
-numero di sinapsi cresce cosi' in modo LINEARE con N, non quadratico
--- e' cio' che rende possibile scalare a milioni di neuroni.
-
-USO: esegui questo script. Prova' automaticamente dimensioni via via
-piu' grandi, stampando tempo e memoria usati. Fermati (Ctrl+C) quando
-i tempi diventano troppo lunghi per i tuoi scopi, oppure lascialo
-finire: si fermera' da solo se una dimensione fallisce per mancanza
-di memoria.
+Benchmark di scaling verso la taglia di un cervello di topo (~70M neuroni).
+Connettivita' a grado fisso K (invece di probabilita' p costante): il numero
+di sinapsi cresce linearmente con N invece che come N^2, condizione
+necessaria per arrivare a milioni di neuroni su hardware locale.
+Misura tempo/memoria a dimensioni crescenti fino al limite pratico della macchina.
 """
 
 from brian2 import *
@@ -35,13 +14,11 @@ try:
     import resource
     HAS_RESOURCE = True
 except ImportError:
-    HAS_RESOURCE = False  # su alcuni sistemi (es. Windows) non e' disponibile
+    HAS_RESOURCE = False  # non disponibile su Windows
 
 
 def run_network(N, K_local=15, sim_time=200*ms):
-    """Rete E/I bilanciata (80% eccitatori, 20% inibitori) con
-    connettivita' a grado fisso K. Ritorna tempo, numero di sinapsi,
-    spike totali e (se disponibile) memoria usata."""
+    """Rete E/I 80/20 a grado fisso K. Ritorna tempo, n. sinapsi, spike, memoria."""
     start_scope()
 
     N_E = int(N * 0.8)
@@ -87,8 +64,7 @@ def run_network(N, K_local=15, sim_time=200*ms):
     syn_ii = Synapses(I_pop, I_pop, on_pre='v_post -= w_inh')
     syn_ii.connect(j=f'k for k in sample(N_I, size={K_ii})', skip_if_invalid=True)
 
-    # record=False: contiamo solo il NUMERO di spike, non salviamo i
-    # tempi di ognuno -- risparmia moltissima memoria a grandi scale
+    # record=False: solo conteggio spike, non i tempi -- risparmia memoria a scala
     spikes = SpikeMonitor(neurons, record=False)
 
     t0 = pytime.time()
@@ -100,15 +76,12 @@ def run_network(N, K_local=15, sim_time=200*ms):
 
     mem_mb = None
     if HAS_RESOURCE:
-        # su macOS ru_maxrss e' in BYTES (non KB come su Linux)
+        # macOS: ru_maxrss in bytes (KB su Linux)
         mem_mb = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss / (1024*1024)
 
     return elapsed, n_synapses, n_spikes, mem_mb
 
 
-# ---------------------------------------------------------------
-# SCALING PROGRESSIVO: prova dimensioni via via piu' grandi
-# ---------------------------------------------------------------
 MOUSE_BRAIN_NEURONS = 70_000_000
 
 sizes_to_test = [1_000, 10_000, 100_000, 500_000,
@@ -129,10 +102,9 @@ for N in sizes_to_test:
               f"{mem_str:>10} | {pct_mouse:>15.3f}%")
         results.append((N, elapsed, mem))
 
-        # fermati automaticamente se un singolo run supera i 5 minuti
+        # stop automatico oltre i 5 minuti per singolo run
         if elapsed > 300:
-            print("\nTempo superiore a 5 minuti: mi fermo qui per non "
-                  "bloccarti il Mac troppo a lungo.")
+            print("\nTempo superiore a 5 minuti: interrotto.")
             break
     except MemoryError:
         print(f"{N:>12,} | MEMORIA ESAURITA -- questo e' il tuo limite pratico.")

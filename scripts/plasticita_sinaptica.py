@@ -1,19 +1,6 @@
 """
-PLASTICITA' SINAPTICA: facilitazione a breve termine
-========================================================
-Finora la sinapsi tra A e B aveva sempre la stessa intensita'.
-Qui la facciamo CAMBIARE in base all'uso: e' il primo passo,
-concettualmente, verso l'apprendimento biologico.
-
-Il meccanismo che implementiamo si chiama "facilitazione a breve
-termine" (short-term facilitation, STF): ogni volta che A spara,
-l'efficacia della sinapsi aumenta un po' (variabile 'g'), ma poi
-decade esponenzialmente nel tempo se A non spara piu'.
-Risultato: se A spara ripetutamente e velocemente, ogni spike
-successivo ha un effetto PIU' FORTE su B rispetto al primo.
-
-Questo e' il meccanismo reale dietro fenomeni come la sommazione
-temporale nei neuroni corticali.
+Facilitazione sinaptica a breve termine (STF): g si incrementa ad ogni
+spike di A e decade con tau_facilitation. A -> B, stimolo a raffica su A.
 """
 
 from brian2 import *
@@ -36,16 +23,10 @@ neurons = NeuronGroup(2, eqs, threshold='v > 30*mV', reset='v = c; u += d',
 neurons.v = -65*mV
 neurons.u = b * neurons.v
 
-# Stimoliamo A con una corrente PIU' FORTE del solito, cosi' spara
-# a raffica e possiamo vedere bene l'effetto di facilitazione.
+# corrente su A piu' alta del solito -> raffica di spike, effetto facilitazione visibile
 neurons.I = [25*mV/ms, 0*mV/ms]
 
-# ---------------------------------------------------------------
-# SINAPSI CON PLASTICITA'
-# ---------------------------------------------------------------
-# g = "peso" attuale della sinapsi (parte da un valore base)
-# tau_facilitation = quanto velocemente il rafforzamento decade nel tempo
-# facilitation_increment = di quanto aumenta 'g' ad ogni spike di A
+# g: peso corrente della sinapsi, rilassa verso g_base con costante tau_facilitation
 synapse_eqs = '''
 dg/dt = (g_base - g) / tau_facilitation : volt (clock-driven)
 g_base : volt
@@ -61,23 +42,17 @@ syn = Synapses(neurons, neurons, model=synapse_eqs,
                 method='euler')
 syn.connect(i=0, j=1)
 syn.delay = 1.5*ms
-syn.g = 8*mV                      # peso iniziale (sotto soglia da solo)
-syn.g_base = 8*mV                 # valore a cui 'g' decade se A non spara
-syn.tau_facilitation = 50*ms      # tempo caratteristico di decadimento
-syn.facilitation_increment = 6*mV # quanto si rafforza ad ogni spike
+syn.g = 8*mV                      # sotto soglia da solo
+syn.g_base = 8*mV
+syn.tau_facilitation = 50*ms
+syn.facilitation_increment = 6*mV
 
-# ---------------------------------------------------------------
-# MONITORAGGIO E SIMULAZIONE
-# ---------------------------------------------------------------
 mon = StateMonitor(neurons, 'v', record=True)
 g_mon = StateMonitor(syn, 'g', record=0)
 spikes = SpikeMonitor(neurons)
 
 run(200*ms)
 
-# ---------------------------------------------------------------
-# VISUALIZZAZIONE
-# ---------------------------------------------------------------
 figure(figsize=(10, 7))
 
 subplot(3, 1, 1)
@@ -106,7 +81,6 @@ savefig('plasticita_sinaptica.png', dpi=150)
 print("Simulazione completata. Grafico salvato in plasticita_sinaptica.png")
 print(f"Spike di A: {sum(spikes.i == 0)}")
 print(f"Spike di B: {sum(spikes.i == 1)}")
-print(f"Peso sinaptico iniziale: {syn.g[0]/mV:.1f} mV (osserva come sale nel grafico centrale)")
-print("\nOsservazione chiave: i primi spike di A potrebbero non bastare a far")
-print("sparare B (sinapsi ancora 'debole'), ma dopo alcuni spike ravvicinati")
-print("la sinapsi si e' rafforzata abbastanza da far scattare B.")
+print(f"Peso sinaptico iniziale: {syn.g[0]/mV:.1f} mV (vedi andamento nel grafico centrale)")
+print("\nI primi spike di A da soli non bastano a far sparare B; dopo alcuni")
+print("spike ravvicinati la sinapsi facilitata fa scattare B.")

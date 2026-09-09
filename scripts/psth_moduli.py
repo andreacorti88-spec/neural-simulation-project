@@ -1,28 +1,9 @@
 """
-PROVE RIPETUTE E MEDIA (PSTH): la propagazione e' reale o e' rumore?
-====================================================================
-Nello script precedente, una singola prova sembrava mostrare una
-chiara risposta del Modulo 2 allo stimolo del Modulo 1. Ma guardando
-il grafico con attenzione, quel rialzo era paragonabile alle normali
-fluttuazioni spontanee della rete — non potevamo essere sicuri che
-fosse un vero effetto o solo una coincidenza casuale.
-
-LA SOLUZIONE STANDARD in neuroscienza: ripetere l'esperimento molte
-volte, allineare ogni prova rispetto al momento dello stimolo, e
-fare la MEDIA. Se c'e' un vero effetto, nella media emerge sopra il
-rumore (che tende a cancellarsi mediando su piu' prove). Se non c'e'
-nessun vero effetto, la media resta piatta. Questa tecnica si chiama
-PSTH (Peristimulus Time Histogram) ed e' lo standard per analizzare
-dati neurali reali.
-
-In questo script:
-  1. Ripetiamo lo stimolo al Modulo 1 per 25 volte, spaziate nel tempo
-  2. Per ogni ripetizione, registriamo l'attivita' del Modulo 2 nella
-     finestra [-50, +150] ms attorno allo stimolo
-  3. Facciamo la media (e calcoliamo l'errore standard) su tutte le
-     25 ripetizioni
-  4. Confrontiamo il risultato mediato con la variabilita' naturale
-     di una singola prova, per capire se l'effetto e' reale
+PSTH su 25 ripetizioni dello stimolo al Modulo 1, per capire se la risposta
+osservata del Modulo 2 (script precedente, singola prova) e' un effetto reale
+o rientra nella variabilita' spontanea della rete. Media + SEM allineate
+allo stimolo, finestra [-50,+150]ms, confronto con la deviazione standard
+di una singola prova.
 """
 
 from brian2 import *
@@ -30,9 +11,7 @@ import numpy as np
 
 start_scope()
 
-# ---------------------------------------------------------------
-# STRUTTURA DELLA RETE (identica allo script dei due moduli)
-# ---------------------------------------------------------------
+# struttura identica allo script dei due moduli
 N_E_mod = 120
 N_I_mod = 30
 N_mod = N_E_mod + N_I_mod
@@ -87,21 +66,14 @@ syn_12.connect(p=p_inter)
 syn_21 = Synapses(M2_E, M1_E, on_pre='v_post += w_inter')
 syn_21.connect(p=p_inter)
 
-# ---------------------------------------------------------------
-# BURN-IN
-# ---------------------------------------------------------------
 run(200*ms)
 print("Burn-in completato.")
 
 spikes = SpikeMonitor(neurons)
 
-# ---------------------------------------------------------------
-# 25 RIPETIZIONI DELLO STIMOLO, spaziate di 300ms l'una dall'altra
-# (abbastanza tempo perche' la rete torni alla normalita' tra una
-# ripetizione e la successiva)
-# ---------------------------------------------------------------
+# 25 ripetizioni, ISI 300ms (tempo sufficiente perche' la rete torni al baseline)
 N_TRIALS = 25
-ISI = 300*ms          # tempo tra uno stimolo e il successivo
+ISI = 300*ms
 stim_dur = 20*ms
 stim_group = M1_E[:20]
 
@@ -116,9 +88,7 @@ for trial in range(N_TRIALS):
 
 print(f"Completate {N_TRIALS} ripetizioni dello stimolo.")
 
-# ---------------------------------------------------------------
-# COSTRUZIONE DEL PSTH (media sulle prove)
-# ---------------------------------------------------------------
+# PSTH: media sulle prove
 t_spikes = np.array(spikes.t/ms)
 i_spikes = np.array(spikes.i)
 mod2_mask = i_spikes >= 150
@@ -158,12 +128,7 @@ print(f"Variabilita' naturale di UNA SINGOLA prova (deviazione standard): "
 print(f"\nConfronto: l'effetto medio (+{peak2-baseline2:.2f} Hz) e' "
       f"{'chiaramente sopra' if (peak2-baseline2) > trial_std2 else 'paragonabile a'} "
       f"il rumore di una singola prova ({trial_std2:.2f} Hz)")
-print("Questo e' il motivo per cui una sola prova non basta a "
-      "concludere se la propagazione e' reale.")
 
-# ---------------------------------------------------------------
-# VISUALIZZAZIONE
-# ---------------------------------------------------------------
 figure(figsize=(11, 7))
 
 subplot(2, 1, 1)

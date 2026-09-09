@@ -1,19 +1,8 @@
 """
-RING ATTRACTOR (modello a tasso di scarica, Amari 1977 / Ben-Yishai 1995)
-============================================================================
-Questo e' l'approccio standard e rigoroso in letteratura per costruire un
-vero attrattore neurale stabile. Invece di simulare ogni singolo spike
-(che introduce problemi di sincronia difficili da tarare), si modella
-direttamente il TASSO DI SCARICA r(x,t) di popolazioni di neuroni disposte
-su un anello, con un kernel di connettivita' a "cappello messicano":
-eccitazione forte tra vicini stretti, inibizione piu' ampia (ma piu' debole
-per unita') a distanza media.
-
-Equazione (Amari, 1977):
-    tau * dr/dt = -r + F( J * r + I_ext )
-dove J*r e' la convoluzione del tasso con il kernel J (l'input ricorrente
-che ogni punto riceve dagli altri), F e' una funzione di attivazione non
-lineare (qui: rettificata, r >= 0).
+Ring attractor a tasso di scarica (Amari 1977 / Ben-Yishai 1995):
+tau*dr/dt = -r + F(J*r + I_ext), kernel a cappello messicano su anello.
+Rate model invece di spiking per evitare i problemi di taratura della
+sincronia. Verifica di persistenza del bump dopo rimozione dello stimolo.
 """
 
 import numpy as np
@@ -23,17 +12,14 @@ import matplotlib.pyplot as plt
 
 np.random.seed(0)
 
-N = 200                    # punti sull'anello
-x = np.arange(N) / N       # posizione, 0..1
-tau = 10.0                 # costante di tempo (ms)
+N = 200
+x = np.arange(N) / N
+tau = 10.0
 dt = 0.5
 T_total = 600
 n_steps = int(T_total/dt)
 
-# ---------------------------------------------------------------
-# KERNEL A CAPPELLO MESSICANO: eccitazione locale stretta, inibizione
-# piu' ampia. Distanza circolare sull'anello.
-# ---------------------------------------------------------------
+# kernel a cappello messicano: eccitazione stretta, inibizione piu' ampia
 def circ_dist(d):
     return 0.5 - np.abs(np.abs(d) - 0.5)
 
@@ -47,11 +33,9 @@ A_inh = 1.0
 J = A_exc*np.exp(-d_matrix**2/(2*sigma_exc**2)) - A_inh*np.exp(-d_matrix**2/(2*sigma_inh**2))
 
 def F(u):
-    return np.maximum(u, 0)  # rettificazione semplice
+    return np.maximum(u, 0)
 
-# ---------------------------------------------------------------
-# SIMULAZIONE: stimolo localizzato, poi rimosso, verifica persistenza
-# ---------------------------------------------------------------
+# stimolo localizzato, poi rimosso -- verifica persistenza del bump
 def run_sim(stim_center, stim_duration_steps, stim_strength=2.0, r0=None):
     r = np.zeros(N) if r0 is None else r0.copy()
     history = np.zeros((n_steps, N))
@@ -65,13 +49,10 @@ def run_sim(stim_center, stim_duration_steps, stim_strength=2.0, r0=None):
         history[step] = r
     return history
 
-stim_duration_steps = int(80/dt)  # stimolo per 80ms, poi rimosso
+stim_duration_steps = int(80/dt)  # 80ms, poi rimosso
 history = run_sim(stim_center=0.25, stim_duration_steps=stim_duration_steps)
 
-# ---------------------------------------------------------------
-# VERIFICA: il bump persiste DOPO la rimozione dello stimolo?
-# ---------------------------------------------------------------
-t_after_stim = stim_duration_steps + int(50/dt)  # 50ms dopo la fine dello stimolo
+t_after_stim = stim_duration_steps + int(50/dt)  # 50ms dopo fine stimolo
 r_after = history[t_after_stim]
 r_final = history[-1]
 peak_after = r_after.max()

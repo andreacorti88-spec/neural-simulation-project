@@ -1,33 +1,9 @@
 """
-CONNETTIVITA' STRUTTURATA (SMALL-WORLD): verso un realismo spaziale
-====================================================================
-Tutte le reti costruite finora (anche quella a 40 milioni di neuroni)
-usavano connettivita' CASUALE: ogni neurone si collega a K altri
-scelti a caso in tutta la rete, senza alcuna nozione di "spazio" o
-"vicinanza". Il cervello reale non funziona cosi': un neurone si
-connette soprattutto ai suoi vicini fisici, con solo poche
-connessioni rare a lunga distanza (le fibre della sostanza bianca).
-Questo tipo di organizzazione si chiama "small-world" (Watts-Strogatz,
-1998) ed e' uno dei pattern piu' universali nei sistemi biologici.
-
-MODELLO USATO QUI:
-  - I 1000 neuroni sono disposti su un ANELLO (posizione x da 0 a 1,
-    con avvolgimento circolare)
-  - La probabilita' di connessione tra due neuroni DECRESCE
-    esponenzialmente con la distanza sull'anello (connessioni dense
-    e locali), piu' una piccola probabilita' costante di connessioni
-    "a scorciatoia" a lunga distanza (le shortcut del modello
-    small-world, che tengono la rete comunque ben connessa nel suo
-    insieme)
-
-COSA OSSERVIAMO CHE NON SI VEDEVA CON LA CONNETTIVITA' CASUALE:
-Stimolando un piccolo gruppo di neuroni ADIACENTI nello spazio (non
-sparsi a caso come prima), il segnale si propaga come una VERA ONDA
-che si allontana dal punto di stimolo -- misurabile: la distanza
-media degli spike dal punto di stimolo cresce in modo monotono nel
-tempo, poi si stabilizza quando l'onda ha investito l'intera rete.
-Con connettivita' casuale questo fenomeno non puo' esistere, perche'
-non c'e' alcuna nozione di "vicino" o "lontano" nella topologia.
+Connettivita' small-world (Watts-Strogatz 1998) su anello, 1000 neuroni.
+p(connessione) decade esponenzialmente con la distanza circolare + probabilita'
+costante di shortcut a lunga distanza. Stimolo su un gruppo spazialmente
+contiguo -> verifica di propagazione ondulatoria (distanza media dal punto
+di stimolo che cresce monotonicamente nel tempo), assente con connettivita' casuale.
 """
 
 from brian2 import *
@@ -56,7 +32,7 @@ neurons = NeuronGroup(N, eqs, threshold='v > 30*mV', reset='v = c; u += d',
 neurons.v = -65*mV + 15*mV*rand(N) - 5*mV
 neurons.u = b * neurons.v[:] + 2*mV/ms*randn(N)
 neurons.I = 0*mV/ms
-neurons.x = arange(N)/N   # posizione sull'anello, distribuita uniformemente
+neurons.x = arange(N)/N   # posizione sull'anello
 
 E = neurons[:N_E]
 I_pop = neurons[N_E:]
@@ -68,14 +44,12 @@ bg_syn.connect(j='i')
 w_exc = 1.0*mV
 w_inh = 4.0*mV
 
-# ---------------------------------------------------------------
-# CONNETTIVITA' DIPENDENTE DALLA DISTANZA (il cuore del modello)
-# ---------------------------------------------------------------
-xi = 0.03           # lunghezza caratteristica: quanto "locale" e' la connettivita'
-p_local = 0.5        # probabilita' massima per neuroni immediatamente vicini
-p_shortcut = 0.005    # probabilita' costante di connessioni a lunga distanza
+# connettivita' dipendente dalla distanza
+xi = 0.03             # lunghezza caratteristica di localita'
+p_local = 0.5         # prob. massima per vicini immediati
+p_shortcut = 0.005    # prob. costante shortcut a lunga distanza
 
-# distanza circolare tra due punti su un anello (0..1, con avvolgimento)
+# distanza circolare (0..1, con avvolgimento)
 dist_expr = '(0.5 - abs(abs(x_pre-x_post) - 0.5))'
 prob_expr = f'{p_local}*exp(-({dist_expr})/{xi}) + {p_shortcut}'
 
@@ -91,9 +65,6 @@ syn_ii.connect(condition='i!=j', p=prob_expr)
 print(f"Sinapsi create -- EE: {len(syn_ee)}, EI: {len(syn_ei)}, "
       f"IE: {len(syn_ie)}, II: {len(syn_ii)}")
 
-# ---------------------------------------------------------------
-# BURN-IN + BASELINE
-# ---------------------------------------------------------------
 run(200*ms)
 print("Burn-in completato.")
 
@@ -103,9 +74,7 @@ rate_mon = PopulationRateMonitor(neurons)
 run(100*ms)
 print("Baseline registrata.")
 
-# ---------------------------------------------------------------
-# STIMOLO: 20 neuroni CONTIGUI nello spazio (vicino a x=0)
-# ---------------------------------------------------------------
+# stimolo: 20 neuroni contigui nello spazio (vicino a x=0)
 stim_group = E[0:20]
 stim_time = 300*ms
 stim_group.I = 40*mV/ms
@@ -116,10 +85,7 @@ print("Stimolo applicato a una regione LOCALE della rete (non sparsa a caso).")
 run(150*ms)
 print("Simulazione completata.")
 
-# ---------------------------------------------------------------
-# ANALISI: la distanza media degli spike dal punto di stimolo
-# cresce nel tempo? (segnale di una vera onda di propagazione)
-# ---------------------------------------------------------------
+# la distanza media degli spike dal punto di stimolo cresce nel tempo?
 t_arr = np.array(spikes.t/ms)
 i_arr = np.array(spikes.i)
 
@@ -145,9 +111,6 @@ if mean_dists[-1] > mean_dists[0]:
     print(">>> La distanza cresce nel tempo: confermata una vera "
           "propagazione spaziale (onda). <<<")
 
-# ---------------------------------------------------------------
-# VISUALIZZAZIONE
-# ---------------------------------------------------------------
 figure(figsize=(11, 8))
 
 subplot(3, 1, 1)

@@ -1,40 +1,16 @@
 """
-RETE CON DENSITA' SINAPTICA REALISTICA (livello Allen Institute)
-====================================================================
-Miglioramento su DUE assi contemporaneamente rispetto alla rete a
-40 milioni di neuroni:
+Rete E/I con densita' sinaptica realistica (~2600 sinapsi/neurone, livello
+Allen Institute) e sinapsi a conduttanza (invece del salto di tensione
+v_post += w usato negli script precedenti): ge/gi decadono esponenzialmente
+e spingono v verso un potenziale di inversione (E_exc=0mV tipo AMPA,
+E_inh=-80mV tipo GABA-A). Budget di memoria fisso -> aumentare la densita'
+21x rispetto a rete_40M_finale costringe a ridurre N a ~118K.
 
-1. DENSITA' SINAPTICA: ~2600 sinapsi per neurone (contro le ~31 della
-   rete a 40M) -- la stessa densita' media del modello piu' avanzato
-   al mondo (Allen Institute, Fugaku supercomputer, 2025-2026).
-   Il costo: la memoria e' un budget FISSO condiviso tra "quanti
-   neuroni" e "quante sinapsi ciascuno" -- aumentare la densita' 21x
-   costringe a ridurre i neuroni di conseguenza (40M -> ~118K).
+Pesi w_e/w_i ricalibrati empiricamente per K=1300: la regola "pesi
+inversamente proporzionali a K" non basta, la rete e' molto piu' sensibile
+del previsto quando K cresce di un ordine di grandezza (target ~18Hz stabile).
 
-2. SINAPSI A CONDUTTANZA: invece del semplice "salto di tensione
-   istantaneo" (v_post += w) usato in tutti gli esperimenti precedenti
-   del progetto, qui ogni sinapsi apre un canale ionico con una
-   conduttanza che decade esponenzialmente e "spinge" il potenziale
-   verso un preciso potenziale di inversione (0 mV per le sinapsi
-   eccitatorie tipo AMPA, -80 mV per quelle inibitorie tipo GABA-A).
-   Questo e' il modello standard usato nei testi di neuroscienza
-   computazionale (es. Dayan & Abbott) proprio perche' piu' realistico:
-   l'effetto di una sinapsi dipende dalla "forza motrice" (differenza
-   tra potenziale attuale e potenziale di inversione), non e' un
-   salto fisso indipendente dallo stato del neurone.
-
-NOTA SUI PESI: i pesi sinaptici (w_e, w_i) sono stati ricalibrati
-EMPIRICAMENTE per questa densita' (K=1300 connessioni per tipo),
-verificato che producono un'attivita' di rete stabile e plausibile
-(~18 Hz) invece di esplodere o spegnersi -- la semplice regola "pesi
-inversamente proporzionali a K" NON e' bastata, la rete e' molto piu'
-sensibile del previsto quando K cresce di un ordine di grandezza.
-
-TEMPO ATTESO: in base ai benchmark, un singolo blocco di 200ms
-richiede circa 19 minuti. L'esperimento completo (burn-in + baseline
-+ stimolo + recovery, ~470ms totali) potrebbe richiedere 45-90 minuti,
-forse di piu' se interviene il throttling termico gia' osservato con
-la rete a 40M. Chiudi le altre app, tienilo collegato alla corrente.
+Costo: ~19 min per blocco di 200ms, run completo stimato 45-90 min.
 """
 
 from brian2 import *
@@ -49,16 +25,16 @@ start_scope()
 N = 118_000
 N_E = int(N * 0.8)
 N_I = N - N_E
-K = 1300  # connessioni per neurone per ciascun tipo di sinapsi -> ~2600 sinapsi/neurone totali
+K = 1300  # connessioni/neurone per tipo -> ~2600 sinapsi/neurone totali
 
 a = 0.02/ms
 b = 0.2/ms
 c = -65*mV
 d = 6*mV/ms
-E_exc = 0*mV      # potenziale di inversione eccitatorio (tipo AMPA)
-E_inh = -80*mV    # potenziale di inversione inibitorio (tipo GABA-A)
-tau_e = 5*ms       # costante di tempo di decadimento conduttanza eccitatoria
-tau_i = 10*ms      # costante di tempo di decadimento conduttanza inibitoria
+E_exc = 0*mV      # AMPA
+E_inh = -80*mV    # GABA-A
+tau_e = 5*ms
+tau_i = 10*ms
 
 eqs = '''
 dv/dt = (0.04/mV*v**2 + 5*v + 140*mV)/ms - u + ge*(E_exc-v) + gi*(E_inh-v) + I_ext : volt
@@ -81,16 +57,14 @@ background = PoissonGroup(N, rates=1200*Hz)
 bg_syn = Synapses(background, neurons, on_pre='ge_post += 15/second')
 bg_syn.connect(j='i')
 
-# pesi calibrati empiricamente per K=1300 (vedi nota sopra)
+# pesi calibrati empiricamente per K=1300
 w_e = 0.22/second
 w_i = 0.9/second
 
 
 def gen_fixed_degree(n_source, n_target, K, exclude_self=False):
-    """Genera connettivita' a grado fisso in modo vettorializzato:
-    ogni neurone sorgente si connette a K neuroni bersaglio scelti a
-    caso. Molto piu' efficiente della sintassi p= di Brian2 quando K
-    e' grande (migliaia)."""
+    """Connettivita' a grado fisso, vettorializzata (piu' efficiente della
+    sintassi p= di Brian2 quando K e' dell'ordine delle migliaia)."""
     src = np.repeat(np.arange(n_source), K)
     tgt = np.random.randint(0, n_target, size=n_source*K)
     if exclude_self:
@@ -122,7 +96,7 @@ print(f"Sinapsi totali: {n_syn_total:,} ({n_syn_total/N:.0f} per neurone in medi
 
 net = Network(collect())
 
-print("\nInizio burn-in (200ms simulati, atteso ~19 minuti)...")
+print("\nInizio burn-in (200ms simulati)...")
 t0 = pytime.time()
 net.run(200*ms)
 print(f"Burn-in completato in {pytime.time()-t0:.1f}s.")
@@ -149,9 +123,6 @@ t0 = pytime.time()
 net.run(150*ms)
 print(f"Recovery completata in {pytime.time()-t0:.1f}s.")
 
-# ---------------------------------------------------------------
-# ANALISI
-# ---------------------------------------------------------------
 r = np.array(rate_mon.smooth_rate(window='flat', width=5*ms)/Hz)
 t = np.array(rate_mon.t/ms)
 
@@ -176,9 +147,6 @@ if abs(recovery_rate - baseline_rate) < 3:
     print(">>> La rete e' tornata al livello di attivita' di partenza "
           "anche con sinapsi a conduttanza e densita' realistica. <<<")
 
-# ---------------------------------------------------------------
-# VISUALIZZAZIONE
-# ---------------------------------------------------------------
 figure(figsize=(11, 7))
 
 subplot(2, 1, 1)

@@ -1,19 +1,9 @@
 """
-SCALING FASE 2: da 20 milioni verso il limite pratico del tuo Mac
-====================================================================
-Nella fase precedente hai raggiunto 20 milioni di neuroni (620 milioni
-di sinapsi) in ~270 secondi, usando 11.1 GB di RAM su 24 disponibili
--- il 28.6% della scala di un cervello di topo (70 milioni di neuroni).
-
-Qui continuiamo, ma con una differenza importante: PRIMA di tentare
-una dimensione piu' grande, stimiamo quanta memoria richiedera' in
-base all'andamento osservato finora (la memoria cresce in modo quasi
-lineare col numero di neuroni). Se la stima supera una soglia di
-sicurezza, ci fermiamo PRIMA di tentare -- invece di rischiare che il
-tuo Mac vada in swap pesante o si blocchi.
-
-Soglia di sicurezza: lasciamo sempre almeno ~4 GB liberi per il
-sistema operativo e le altre app aperte.
+Scaling fase 2. Fase 1: 20M neuroni (620M sinapsi) in ~270s, 11.1GB/24GB RAM,
+28.6% della scala di un cervello di topo.
+Qui: prima di ogni dimensione, stima la memoria attesa via regressione lineare
+sui punti gia' osservati, e salta il tentativo se supera la soglia di sicurezza
+(margine di ~4GB liberi per OS/altre app) invece di rischiare lo swap.
 """
 
 from brian2 import *
@@ -87,24 +77,19 @@ def run_network(N, K_local=15, sim_time=200*ms):
     return elapsed, n_synapses, n_spikes, mem_mb
 
 
-# ---------------------------------------------------------------
-# DATI GIA' OSSERVATI (dalla fase 1, sul tuo Mac) — usiamo TUTTI i
-# punti con una regressione lineare (piu' robusto di soli 2 punti),
-# e aggiungiamo un margine di sicurezza del 30% sulla stima, perche'
-# la memoria non cresce sempre in modo perfettamente lineare
-# ---------------------------------------------------------------
+# punti osservati in fase 1, regressione lineare N -> memoria
 N_observed = np.array([1_000_000, 3_000_000, 5_000_000, 10_000_000, 20_000_000])
 mem_observed = np.array([1720, 4152, 6254, 9838, 11147])
 
 slope_mb_per_neuron, intercept = np.polyfit(N_observed, mem_observed, 1)
-SAFETY_FACTOR = 1.3   # sovrastimiamo del 30% per stare larghi
+SAFETY_FACTOR = 1.3   # margine 30%, la crescita non e' perfettamente lineare
 
 def predict_memory_mb(N):
     return SAFETY_FACTOR * (intercept + slope_mb_per_neuron * N)
 
 MOUSE_BRAIN_NEURONS = 70_000_000
-TOTAL_RAM_MB = 24 * 1024          # il tuo Mac: 24 GB
-SAFETY_MARGIN_MB = 4 * 1024       # lasciamo 4 GB liberi per il sistema
+TOTAL_RAM_MB = 24 * 1024
+SAFETY_MARGIN_MB = 4 * 1024
 MAX_SAFE_MEM_MB = TOTAL_RAM_MB - SAFETY_MARGIN_MB
 
 sizes_to_test = [25_000_000, 30_000_000, 35_000_000,
@@ -120,7 +105,7 @@ for N in sizes_to_test:
     if predicted > MAX_SAFE_MEM_MB:
         print(f"{N:>12,} | {predicted:>11.0f}MB | -- SALTATO: supererebbe "
               f"la soglia di sicurezza ({MAX_SAFE_MEM_MB:.0f}MB) --")
-        print("\nMi fermo qui per non rischiare di bloccare il Mac.")
+        print("\nInterrotto per stare sotto la soglia di sicurezza.")
         break
 
     try:
@@ -132,7 +117,7 @@ for N in sizes_to_test:
         results.append((N, elapsed, mem))
 
         if elapsed > 300:
-            print("\nTempo superiore a 5 minuti: mi fermo qui.")
+            print("\nTempo superiore a 5 minuti: interrotto.")
             break
     except MemoryError:
         print(f"{N:>12,} | MEMORIA ESAURITA -- questo e' il tuo limite pratico.")

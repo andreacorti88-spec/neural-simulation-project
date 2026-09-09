@@ -1,17 +1,8 @@
 """
-SCALING FASE 4 (FINALE): l'ultimo tratto verso la scala di un cervello di topo
-================================================================================
-Finora, passo dopo passo, hai raggiunto 40 milioni di neuroni (57.1%
-della scala di un cervello di topo — 70 milioni), usando solo 15.7 GB
-di RAM. La crescita della memoria sta rallentando rispetto alle
-stime iniziali (i dati reali continuano a essere piu' bassi del
-previsto), quindi ricalibro ancora una volta la stima usando TUTTI e
-9 i punti raccolti finora, con un margine di sicurezza ridotto al 10%.
-
-Questo e' probabilmente l'ultimo passo di scaling puro: da qui in poi,
-se la memoria lo permette, l'obiettivo e' arrivare il piu' vicino
-possibile a 70.000.000 (un cervello di topo completo), sapendo che
-potremmo non arrivarci per intero.
+Scaling fase 4 (finale). Fase 3: 40M neuroni (57.1%), 15.7GB RAM -- la
+crescita della memoria continua a essere piu' lenta del previsto. Regressione
+ricalibrata su tutti e 9 i punti raccolti, margine di sicurezza ridotto al 10%.
+Obiettivo: avvicinarsi il piu' possibile a 70M (scala completa di topo).
 """
 
 from brian2 import *
@@ -85,9 +76,7 @@ def run_network(N, K_local=15, sim_time=200*ms):
     return elapsed, n_synapses, n_spikes, mem_mb
 
 
-# ---------------------------------------------------------------
-# TUTTI I DATI RACCOLTI FINORA (fasi 1, 2, 3 — 9 punti reali)
-# ---------------------------------------------------------------
+# 9 punti osservati (fasi 1-3)
 N_observed = np.array([1, 3, 5, 10, 20, 25, 30, 35, 40]) * 1_000_000
 mem_observed = np.array([1720, 4152, 6254, 9838, 11147, 11495, 12434, 15104, 15744])
 
@@ -115,7 +104,7 @@ for N in sizes_to_test:
     if predicted > MAX_SAFE_MEM_MB:
         print(f"{N:>12,} | {predicted:>11.0f}MB | -- SALTATO: supererebbe "
               f"la soglia di sicurezza ({MAX_SAFE_MEM_MB:.0f}MB) --")
-        print("\nMi fermo qui per non rischiare di bloccare il Mac.")
+        print("\nInterrotto per stare sotto la soglia di sicurezza.")
         break
 
     try:
@@ -127,7 +116,7 @@ for N in sizes_to_test:
         results.append((N, elapsed, mem))
 
         if elapsed > TIME_LIMIT_S:
-            print(f"\nTempo superiore a {TIME_LIMIT_S//60} minuti: mi fermo qui.")
+            print(f"\nTempo superiore a {TIME_LIMIT_S//60} minuti: interrotto.")
             break
     except MemoryError:
         print(f"{N:>12,} | MEMORIA ESAURITA -- questo e' il tuo limite pratico.")

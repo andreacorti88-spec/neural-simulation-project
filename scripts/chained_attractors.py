@@ -1,27 +1,9 @@
 """
-CATENA DI DUE ATTRATTORI: l'attivazione dell'uno determina l'altro
-====================================================================
-Estensione del ring attractor a due popolazioni collegate:
-
-  RING A: riceve lo stimolo esterno diretto, si comporta esattamente
-          come il ring attractor singolo gia' verificato
-
-  RING B: NON riceve alcuno stimolo esterno diretto. L'unico input che
-          riceve e' una proiezione della posizione del bump di A,
-          spostata di un offset fisso (0.3 sull'anello) -- una mappa
-          associativa fissa, tipo "se A si stabilizza qui, B tende a
-          stabilizzarsi la'"
-
-Questo e' il primo passo meccanico verso una "catena di attivazioni":
-stimolare A -> A si stabilizza -> A "accende" B in una posizione
-corrispondente, SENZA che nessuno dica esplicitamente a B dove andare.
-
-Cosa questo NON e': non c'e' alcuna forma di ragionamento, scelta, o
-valutazione di alternative. E' pura propagazione causale attraverso
-uno stato intermedio stabile -- ma e' esattamente l'ingrediente di
-base necessario prima di poter costruire qualcosa di piu' sofisticato
-(es. piu' stati concatenati, competizione tra piu' possibili "B",
-un segnale di rinforzo che sceglie quale mappa usare).
+Catena di due ring attractor: A riceve lo stimolo diretto, B riceve solo
+la proiezione della posizione del bump di A (offset fisso 0.3 sull'anello,
+mappa associativa hard-coded). Nessun meccanismo di scelta -- propagazione
+causale attraverso uno stato intermedio stabile, propedeutico a
+competizione/rinforzo tra piu' mappe candidate (vedi script successivi).
 """
 
 import numpy as np
@@ -52,8 +34,8 @@ stim_duration_ms = 80
 d_matrix = circ_dist(x[:, None] - x[None, :])
 J_exc = A_exc * np.exp(-d_matrix**2 / (2*sigma_exc**2))
 
-OFFSET_AB = 0.3          # spostamento fisso della mappa associativa A->B
-COUPLING_STRENGTH = 1.3   # intensita' dell'influenza di A su B
+OFFSET_AB = 0.3
+COUPLING_STRENGTH = 1.3
 
 
 def F(u):
@@ -77,7 +59,7 @@ def run_chained(stim_center_A, apply_stim=True):
         drA = (-rA + F(rec_A + I_ext_A)) / tau
         rA_new = rA + dt*drA
 
-        # Ring B: nessuno stimolo esterno -- solo la proiezione spostata di A
+        # B: nessuno stimolo diretto, solo la proiezione spostata di A
         cross_input = np.zeros(N)
         if rA.max() > 0.5:
             peak_A = x[np.argmax(rA)]
@@ -98,7 +80,7 @@ def run_chained(stim_center_A, apply_stim=True):
 
 if __name__ == '__main__':
     print("=" * 65)
-    print("TEST 1: A stimolato in posizioni diverse, B riceve SOLO l'influenza da A")
+    print("TEST 1: A stimolato in posizioni diverse, B guidato solo dall'influenza di A")
     print("=" * 65)
     test_centers = [0.1, 0.3, 0.5, 0.7]
     for center_A in test_centers:
@@ -111,7 +93,7 @@ if __name__ == '__main__':
               f"B: x={posB_str} (atteso ~{expected_B:.3f})")
 
     print("\n" + "=" * 65)
-    print("TEST 2: controllo -- senza stimolo ad A, ne' A ne' B si attivano")
+    print("TEST 2: controllo, senza stimolo ad A ne' A ne' B dovrebbero attivarsi")
     print("=" * 65)
     rA0, rB0, _, _ = run_chained(0.3, apply_stim=False)
     print(f"  A picco finale: {rA0.max():.6f}")
@@ -119,9 +101,7 @@ if __name__ == '__main__':
     if rA0.max() < 0.01 and rB0.max() < 0.01:
         print("  >>> Confermato: nessuna attivazione spontanea. <<<")
 
-    # -------------------------------------------------------------
-    # VISUALIZZAZIONE: spazio-tempo di A e B per il caso stimolo a x=0.3
-    # -------------------------------------------------------------
+    # spazio-tempo di A e B, caso stimolo a x=0.3
     _, _, history_A, history_B = run_chained(0.3)
     t_axis = np.arange(n_steps)*dt
 
@@ -132,7 +112,7 @@ if __name__ == '__main__':
     axes[0].axvline(stim_duration_ms, color='cyan', linestyle='--', linewidth=1.2,
                      label='fine stimolo esterno (solo su A)')
     axes[0].set_ylabel('Posizione su Ring A')
-    axes[0].set_title('Ring A: riceve lo stimolo esterno direttamente')
+    axes[0].set_title('Ring A: stimolo esterno diretto')
     axes[0].legend(loc='upper right', fontsize=8)
     plt.colorbar(im0, ax=axes[0], label='r_A(x,t)')
 
@@ -141,7 +121,7 @@ if __name__ == '__main__':
     axes[1].axvline(stim_duration_ms, color='cyan', linestyle='--', linewidth=1.2)
     axes[1].set_xlabel('Tempo (ms)')
     axes[1].set_ylabel('Posizione su Ring B')
-    axes[1].set_title('Ring B: NESSUNO stimolo esterno -- si accende solo grazie ad A '
+    axes[1].set_title('Ring B: nessuno stimolo diretto, si attiva via proiezione da A '
                        '(nota il ritardo)')
     plt.colorbar(im1, ax=axes[1], label='r_B(x,t)')
 

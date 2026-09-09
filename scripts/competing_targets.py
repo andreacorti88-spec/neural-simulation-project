@@ -1,32 +1,10 @@
 """
-COMPETIZIONE TRA ATTRATTORI: B "sceglie" tra alternative
-====================================================================
-Estensione del sistema A->B con mappa fissa: invece di UN'UNICA
-destinazione possibile per B, offriamo TRE candidati (offset diversi
-sull'anello), ciascuno con un proprio "peso" (forza associativa).
-Grazie all'inibizione globale gia' presente nella dinamica di B
-(meccanismo winner-take-all), solo UN candidato puo' vincere e
-stabilizzarsi -- gli altri vengono soppressi.
-
-DUE REGIMI TESTATI ONESTAMENTE:
-
-  1. PESI UGUALI: in assenza di rumore (o con rumore troppo debole),
-     il "vincitore" e' determinato da un bias numerico deterministico
-     dell'implementazione (differenze in floating point dell'ordine
-     di 1e-4, amplificate dalla dinamica non lineare) -- NON e' vera
-     casualita'. Aumentando il rumore continuo iniettato nella
-     competizione a un livello sufficiente, la rottura di simmetria
-     diventa genuinamente casuale e variabile tra le prove.
-
-  2. PESI DIVERSI: quando un candidato ha un peso maggiore, vince in
-     modo affidabile e ripetibile -- una vera selezione basata su un
-     criterio (la forza del peso), non casuale e non arbitraria.
-
-Questo e' il primo mattone di una "decisione" nel senso debole del
-termine: il sistema seleziona un'alternativa tra piu' possibili, in
-base a un criterio esplicito (il peso). Resta comunque lontanissimo
-da un vero processo decisionale: il criterio e' fisso e dato
-dall'esterno, non appreso o valutato dal sistema stesso.
+Estensione di chained_attractors: 3 candidati B (offset diversi sull'anello),
+ciascuno con peso proprio, inibizione globale -> winner-take-all.
+Due regimi: pesi uguali (senza rumore sufficiente il vincitore e' un bias
+numerico deterministico dell'implementazione, non vera casualita' -- verificato
+qui esplicitamente prima di fidarsi del rumore) e pesi diseguali (selezione
+affidabile per peso maggiore). Criterio di selezione fisso, non appreso.
 """
 
 import numpy as np
@@ -87,7 +65,7 @@ def run_competition(stim_center_A, weights, seed_noise=0, noise_std=0.15):
                 cross_input += w * COUPLING_STRENGTH * rA.max() * np.exp(
                     -circ_dist(x-target)**2/(2*stim_width**2))
             if rng is not None:
-                cross_input += rng.normal(0, noise_std, N)  # rumore CONTINUO
+                cross_input += rng.normal(0, noise_std, N)
 
         rec_B = J_exc @ rB / N - global_inhib*rB.mean()
         rB = rB + dt*(-rB + F(rec_B + cross_input)) / tau
@@ -114,8 +92,8 @@ if __name__ == '__main__':
         w = find_winner(rB_f)
         winners_no_noise.append(w)
         print(f"  Prova {trial+1} (nessun rumore): vince candidato {w+1}")
-    print(f"  -> Sempre lo stesso candidato: probabile bias numerico "
-          f"dell'implementazione, non vera casualita'.")
+    print(f"  -> Vincitore ripetibile: bias numerico dell'implementazione, "
+          f"non vera casualita'.")
 
     print("\n" + "=" * 65)
     print("TEST 1b: pesi UGUALI, con rumore CONTINUO sufficiente")
@@ -129,8 +107,8 @@ if __name__ == '__main__':
     counts = [winners_noise.count(i) for i in range(3)]
     print(f"  Su {N_TRIALS} prove: candidato 1 vince {counts[0]}x, "
           f"candidato 2 vince {counts[1]}x, candidato 3 vince {counts[2]}x")
-    print("  -> Con rumore sufficiente, la rottura di simmetria e' genuinamente "
-          "variabile (anche se non perfettamente uniforme 1/3-1/3-1/3).")
+    print("  -> Con rumore sufficiente la rottura di simmetria e' variabile "
+          "(non perfettamente uniforme 1/3-1/3-1/3).")
 
     print("\n" + "=" * 65)
     print("TEST 2: un candidato ha peso MAGGIORE -- vince sempre quello?")
@@ -147,9 +125,6 @@ if __name__ == '__main__':
         print(f"  Candidato favorito {favored+1} (peso 1.5 vs 0.5): "
               f"vincitori nelle 6 prove = {[w+1 for w in wins]}")
 
-    # -------------------------------------------------------------
-    # VISUALIZZAZIONE
-    # -------------------------------------------------------------
     fig, axes = plt.subplots(1, 2, figsize=(13, 5))
 
     axes[0].bar(['Candidato 1', 'Candidato 2', 'Candidato 3'], counts,

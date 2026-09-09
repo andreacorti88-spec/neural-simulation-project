@@ -1,27 +1,9 @@
 """
-POLITICA CONTESTUALE: risposte diverse per contesti diversi
-====================================================================
-Finora il sistema imparava UN'UNICA associazione corretta (bandito a
-3 braccia semplice): sempre la stessa risposta, indipendentemente da
-dove si stimolasse A.
-
-Qui il compito e' piu' difficile e piu' realistico: la posizione dello
-stimolo su A definisce un CONTESTO (3 contesti possibili), e ciascun
-contesto ha una propria risposta corretta diversa dagli altri:
-
-    Contesto 1 (A stimolato vicino a x=0.1)  -> risposta corretta: candidato 1
-    Contesto 2 (A stimolato vicino a x=0.5)  -> risposta corretta: candidato 2
-    Contesto 3 (A stimolato vicino a x=0.8)  -> risposta corretta: candidato 3
-
-Il sistema deve imparare TRE associazioni contemporaneamente, non una
-sola -- e a fine training va verificato che abbia davvero imparato a
-DISTINGUERE i contesti (non solo a preferire un candidato in generale).
-
-Meccanismo: invece di un unico vettore di pesi, manteniamo una TABELLA
-pesi[contesto][candidato] -- una forma elementare di "memoria associativa
-condizionata al contesto", concettualmente il primo passo verso una
-politica decisionale vera e propria (che sceglie l'azione in base allo
-stato, non sempre la stessa azione).
+Estensione del bandito a 3 braccia (rl_bandit.py) a 3 contesti indipendenti:
+la posizione di stimolo su A (0.1/0.5/0.8) seleziona quale delle 3 risposte
+e' corretta. Tabella pesi[contesto][candidato] invece di un vettore unico --
+verifica a fine training che il sistema distingua i contesti, non solo
+preferisca un candidato in generale.
 """
 
 import numpy as np
@@ -92,15 +74,11 @@ def run_trial(stim_center_A, weights, seed_noise):
     return int(np.argmin(dists))
 
 
-# ---------------------------------------------------------------
-# TRE CONTESTI, TRE RISPOSTE CORRETTE DIVERSE
-# ---------------------------------------------------------------
-CONTEXTS = [0.1, 0.5, 0.8]           # posizioni di stimolo per A
-CORRECT_PER_CONTEXT = [0, 1, 2]       # risposta corretta per ciascun contesto
+CONTEXTS = [0.1, 0.5, 0.8]
+CORRECT_PER_CONTEXT = [0, 1, 2]
 LEARNING_RATE = 0.15
-N_TRIALS = 150   # piu' prove: il compito e' piu' difficile (3 associazioni)
+N_TRIALS = 150   # piu' prove del bandito singolo: 3 associazioni da imparare
 
-# tabella pesi[contesto][candidato], tutti uguali all'inizio
 weights_table = np.full((3, 3), 0.5)
 history = np.zeros((N_TRIALS, 3, 3))
 choices_per_context = {0: [], 1: [], 2: []}
@@ -113,7 +91,7 @@ for c, correct in enumerate(CORRECT_PER_CONTEXT):
 print()
 
 for trial in range(N_TRIALS):
-    context = rng_context.randint(0, 3)   # contesto scelto a caso ad ogni prova
+    context = rng_context.randint(0, 3)
     stim_pos = CONTEXTS[context]
     correct = CORRECT_PER_CONTEXT[context]
 
@@ -130,9 +108,6 @@ for trial in range(N_TRIALS):
         print(f"Prova {trial+1:3d} (contesto {context+1}): "
               f"pesi contesto {context+1} ora = {np.round(weights_table[context],3)}")
 
-# ---------------------------------------------------------------
-# VALUTAZIONE FINALE: il sistema ha imparato a distinguere i 3 contesti?
-# ---------------------------------------------------------------
 print("\n" + "=" * 65)
 print("VALUTAZIONE FINALE (pesi appresi, test pulito senza aggiornamento)")
 print("=" * 65)
@@ -145,9 +120,6 @@ for c in range(3):
     print(f"  Contesto {c+1} (x={CONTEXTS[c]}): accuratezza sul candidato corretto "
           f"({CORRECT_PER_CONTEXT[c]+1}) = {acc*100:.0f}%  |  pesi finali = {np.round(weights_table[c],3)}")
 
-# ---------------------------------------------------------------
-# VISUALIZZAZIONE
-# ---------------------------------------------------------------
 fig, axes = plt.subplots(1, 2, figsize=(13, 5))
 
 window = 15

@@ -1,30 +1,12 @@
 """
-ESPERIMENTO FINALE: 40 MILIONI DI NEURONI (57.1% di un cervello di topo)
-================================================================================
-Questo e' il traguardo del percorso di scaling: la stessa struttura di
-rete bilanciata E/I usata per l'esperimento a 300 neuroni (baseline,
-stimolo mirato, recupero), ma alla scala massima verificata come
-praticabile sul tuo Mac -- 40 milioni di neuroni, 57.1% della scala
-di un cervello di topo (70 milioni).
+Rete E/I bilanciata a 40M neuroni (57.1% scala topo), massima dimensione
+verificata praticabile su questa macchina -- stesso protocollo
+baseline/stimolo/recovery usato a 300 neuroni.
 
-ACCORGIMENTI PER LA MEMORIA (importanti a questa scala):
-  - NON registriamo i tempi di spike di tutti i 40 milioni di neuroni
-    (sarebbe troppa memoria) -- registriamo solo:
-      1. La frequenza di scarica dell'INTERA popolazione nel tempo
-         (PopulationRateMonitor -- efficiente, non salva ogni singolo
-         spike, solo l'andamento aggregato)
-      2. Il raster dettagliato di un piccolo SOTTOINSIEME di 2000
-         neuroni (giusto per avere un'immagine visiva, come le reti
-         precedenti)
-  - Il numero di neuroni stimolati e' lo 0.5% degli eccitatori
-    (~160.000 su 32 milioni) -- una frazione piccola ma sufficiente
-    a produrre un effetto visibile sulla frequenza dell'intera rete
-
-TEMPO ATTESO: in base ai dati di scaling raccolti, костruire la rete
-(i 40M neuroni + ~1.2 miliardi di sinapsi) richiede circa 9-10 minuti.
-Le fasi di baseline/stimolo/recovery aggiungono probabilmente altri
-10-20 minuti. Preventiva un totale di 20-30 minuti, con le altre app
-chiuse per lasciare piu' RAM libera possibile.
+Memoria: niente spike-per-spike su tutti i 40M (PopulationRateMonitor per
+l'aggregato + raster su un sottoinsieme di 2000). Stimolo sullo 0.5% degli
+eccitatori (~160k su 32M), sufficiente per un effetto misurabile a livello
+di popolazione. Costruzione rete + simulazione: ~20-30 min stimati.
 """
 
 from brian2 import *
@@ -32,7 +14,6 @@ import time as pytime
 import numpy as np
 
 print("Costruzione della rete (40 milioni di neuroni)...")
-print("Questo passaggio da solo richiede diversi minuti. Non interrompere.")
 
 start_scope()
 
@@ -83,27 +64,16 @@ syn_ii.connect(j=f'k for k in sample(N_I, size={K_ii})', skip_if_invalid=True)
 
 print(f"Rete costruita in {pytime.time()-t_build_start:.1f}s. Inizio burn-in...")
 
-# ---------------------------------------------------------------
-# BURN-IN
-# ---------------------------------------------------------------
 run(200*ms)
 print("Burn-in completato.")
 
-# ---------------------------------------------------------------
-# MONITOR (leggeri, per non esaurire la memoria)
-# ---------------------------------------------------------------
 rate_mon = PopulationRateMonitor(neurons)
-raster_subset = SpikeMonitor(neurons[:2000], record=True)  # solo 2000 su 40M
+raster_subset = SpikeMonitor(neurons[:2000], record=True)  # sottoinsieme, non tutti i 40M
 
-# ---------------------------------------------------------------
-# BASELINE
-# ---------------------------------------------------------------
 run(200*ms)
 print("Baseline registrata.")
 
-# ---------------------------------------------------------------
-# STIMOLO: 0.5% dei neuroni eccitatori (~160.000 su 32 milioni)
-# ---------------------------------------------------------------
+# stimolo: 0.5% degli eccitatori (~160k su 32M)
 N_STIM = int(N_E * 0.005)
 stim_group = E[:N_STIM]
 stim_time = 400*ms
@@ -112,15 +82,9 @@ run(20*ms)
 stim_group.I = 0*mV/ms
 print(f"Stimolo applicato a {N_STIM:,} neuroni ({N_STIM/N*100:.3f}% della rete totale).")
 
-# ---------------------------------------------------------------
-# RECOVERY
-# ---------------------------------------------------------------
 run(280*ms)
 print("Recovery completato.")
 
-# ---------------------------------------------------------------
-# ANALISI
-# ---------------------------------------------------------------
 r = np.array(rate_mon.smooth_rate(window='flat', width=5*ms)/Hz)
 t = np.array(rate_mon.t/ms)
 
@@ -142,9 +106,6 @@ if abs(recovery_rate - baseline_rate) < 3:
     print(">>> La rete e' tornata al livello di attivita' di partenza "
           "anche a questa scala. <<<")
 
-# ---------------------------------------------------------------
-# VISUALIZZAZIONE
-# ---------------------------------------------------------------
 figure(figsize=(11, 7))
 
 subplot(2, 1, 1)
