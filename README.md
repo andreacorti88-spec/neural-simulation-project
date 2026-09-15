@@ -10,7 +10,7 @@ Un percorso completo di simulazione neurale computazionale — dalla scala di un
 
 ## Cosa contiene questo repository
 
-Sedici esperimenti progressivi, ciascuno costruito sul precedente, con codice verificato eseguendolo realmente (non solo scritto):
+Ventitré esperimenti progressivi, ciascuno costruito sul precedente, con codice verificato eseguendolo realmente (non solo scritto):
 
 - **Comunicazione di base:** soglia sinaptica, plasticità a breve termine, propagazione, sommazione temporale
 - **Apprendimento:** STDP, classificazione di pattern
@@ -19,8 +19,9 @@ Sedici esperimenti progressivi, ciascuno costruito sul precedente, con codice ve
 - **Attrattori:** ring attractor verificato (persistenza, multistabilità, robustezza), catene di attrattori collegati
 - **Decisione:** competizione tra alternative, apprendimento per rinforzo, politica contestuale
 - **Sintesi finale:** struttura spaziale + sinapsi biofisicamente realistiche + densità sinaptica pari al modello più avanzato al mondo (Kuriyama, Akira et al. 2025)
+- **Comunicazione bidirezionale appresa:** dal canale fisso alla sinapsi che impara — adattamento a soglia di scarica, rinforzo Hebbiano a grana di turno, e un test di interferenza tra più messaggi condivisi sulla stessa sinapsi, risolto con un'esplorazione repulsiva
 
-Il resoconto completo (91 pagine, con ogni esperimento spiegato in dettaglio, codice sorgente incluso, ed equazioni) è in [`report/resoconto_progetto_ESTESO.pdf`](report/resoconto_progetto_ESTESO.pdf) (anche in [`.docx`](report/resoconto_progetto_ESTESO.docx)). Una descrizione più breve è in [`README.pdf`](README.pdf).
+Il resoconto completo (125+ pagine, con ogni esperimento spiegato in dettaglio, codice sorgente incluso, ed equazioni) è in [`report/resoconto_progetto_ESTESO.pdf`](report/resoconto_progetto_ESTESO.pdf) (anche in [`.docx`](report/resoconto_progetto_ESTESO.docx)). Una descrizione più breve è in [`README.pdf`](README.pdf).
 
 ## Struttura del repository
 
