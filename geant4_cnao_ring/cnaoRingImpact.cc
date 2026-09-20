@@ -10,7 +10,7 @@
 // energies; see PhysicsList.hh and README.md).
 //
 // Usage:
-//   ./cnaoRingImpact [macro] [particleType] [energy_MeV] [ringDepth_mm]
+//   ./cnaoRingImpact [macro] [particleType] [energy_MeV] [ringDepth_mm] [seed]
 //
 //   macro          path to a .mac file (default: macros/run.mac)
 //   particleType   0 = proton, 1 = carbon-12 (default 0)
@@ -24,12 +24,20 @@
 //                  to find the Bragg peak depth for a given energy
 //                  and pass it here to test the ring AT the peak --
 //                  the clinically relevant scenario.
+//   seed           explicit random seed (default: time-based, i.e. a
+//                  DIFFERENT Monte Carlo realization on every run with
+//                  no 5th argument -- pass an explicit seed for
+//                  reproducible runs or for multi-seed MC verification
+//                  of the dose map, the same discipline already used
+//                  on the Brian2 side, sezione 5.31).
 //
 // Example, 150 MeV protons, ring in the shallow plateau (original):
 //   ./cnaoRingImpact macros/run.mac 0 150 2
 // Example, 70 MeV protons, ring AT the Bragg peak (39.5mm, found with
 // braggProfile):
 //   ./cnaoRingImpact macros/run.mac 0 70 39.5
+// Example, same config with an explicit seed for MC verification:
+//   ./cnaoRingImpact macros/run.mac 0 70 39.5 12345
 
 #include "G4RunManagerFactory.hh"
 #include "G4UImanager.hh"
@@ -44,14 +52,15 @@
 
 int main(int argc, char** argv)
 {
-  G4long seed = static_cast<G4long>(std::time(nullptr));
-  CLHEP::HepRandom::setTheSeed(seed);
-
   G4String macro = (argc > 1) ? argv[1] : "macros/run.mac";
   G4int particleType = (argc > 2) ? std::stoi(argv[2]) : 0;
   G4double energyMeV = (argc > 3) ? std::stod(argv[3])
                                    : (particleType == 1 ? 2400.0 : 150.0);
   G4double ringDepthMM = (argc > 4) ? std::stod(argv[4]) : 2.0;
+  G4long seed = (argc > 5) ? std::stol(argv[5])
+                            : static_cast<G4long>(std::time(nullptr));
+  CLHEP::HepRandom::setTheSeed(seed);
+  G4cout << "Seed usato: " << seed << G4endl;
 
   auto* runManager = G4RunManagerFactory::CreateRunManager(G4RunManagerType::Serial);
 
