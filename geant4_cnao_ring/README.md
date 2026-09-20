@@ -215,13 +215,16 @@ resoconto, sezioni 5.22-5.26.
    diretto (approccio "track re-simulation" multi-scala, lo stesso
    principio usato da TOPAS-nBio) -- collegherebbe questo progetto a
    `geant4dna_icsd` invece di lasciarli separati.
-3. **Soglia di danno neuronale assoluta**: il knockout gia' fatto (sopra)
-   usa un criterio relativo (top-10% per dose in uno scenario), non una
-   soglia assoluta -- che resta comunque non consolidata in letteratura
-   per un singolo neurone, lo stesso limite dichiarato nel paper
-   Villagrasa/Baiocco. Un test di sensibilita' su criteri diversi
-   (dose media invece che picco, dimensione del knockout) e' il passo
-   naturale successivo.
+3. ~~Soglia di danno neuronale assoluta~~ **TESTATO** (sezione 5.38): il
+   knockout resta un criterio relativo (una soglia assoluta di danno
+   biologico non e' comunque consolidata in letteratura per un singolo
+   neurone, lo stesso limite dichiarato nel paper Villagrasa/Baiocco),
+   ma la sensibilita' alla DIMENSIONE del knockout e' stata testata:
+   TOP-5 (overlap 0-vs-0 con le zone di codifica) -> effetto nullo come
+   previsto; TOP-20 (overlap 3-vs-1, segno OPPOSTO al TOP-10 gia'
+   testato) -> l'effetto si inverte nettamente (1.74x, 7/8 seed) esattamente
+   come previsto. Il meccanismo non dipende dalla scelta specifica di
+   "esattamente 10 neuroni".
 4. ~~Knockout al vero picco di Bragg~~ **FATTO** (sezione 5.27 del
    resoconto): con la mappa di dose al picco (non piu' in plateau), il
    set dei 10 neuroni piu' colpiti cambia ancora, con una sovrapposizione
@@ -233,7 +236,7 @@ resoconto, sezioni 5.22-5.26.
    con quanto sono sbilanciati i neuroni spenti tra i due messaggi, non
    un fenomeno di tutto-o-niente.
 
-## Aggiornamenti (sezioni 5.28-5.37)
+## Aggiornamenti (sezioni 5.28-5.38)
 
 - **5.28 -- Gradiente confermato con i protoni**: mappa di dose al picco
   di Bragg per protone 70 MeV, sbilanciamento 4-vs-0 (il piu' netto
@@ -302,6 +305,13 @@ resoconto, sezioni 5.22-5.26.
   top-10 solo da 1.0/10 (puro rumore) a 2/10 -- non basta. Confermato
   che mediare su seed (5.33) e' molto piu' efficiente che aumentare gli
   eventi per run.
+- **5.38 -- La dimensione del knockout non e' magica**: testato TOP-5
+  (overlap 0-vs-0 con le zone di codifica -> effetto nullo come
+  previsto) e TOP-20 (overlap 3-vs-1, segno OPPOSTO al TOP-10 gia'
+  testato -> l'effetto si inverte nettamente, 1.74x, 7/8 seed,
+  esattamente come previsto). Il meccanismo generalizza oltre la
+  scelta specifica di "esattamente 10 neuroni" -- quarta previsione
+  deliberatamente falsificabile confermata in questo progetto.
 
 ## Build ed esecuzione
 
