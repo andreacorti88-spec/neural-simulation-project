@@ -28,7 +28,7 @@ void SteppingAction::UserSteppingAction(const G4Step* step)
   const G4int neuronIndex = touchable->GetCopyNumber();
 
   const G4double edep = step->GetTotalEnergyDeposit();
-  if (edep > 0.) fEventAction->AddEdep(neuronIndex, edep);
+  if (edep > 0.) fEventAction->AddEdep(neuronIndex, edep, step->GetStepLength());
 
   // ParentID==0 identifies the primary proton/ion track itself
   // (as opposed to any secondary electron, delta-ray, or nuclear

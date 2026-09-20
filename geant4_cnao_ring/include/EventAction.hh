@@ -23,12 +23,17 @@ class EventAction : public G4UserEventAction
     void BeginOfEventAction(const G4Event*) override;
     void EndOfEventAction(const G4Event*) override;
 
-    void AddEdep(G4int neuronIndex, G4double edep);
+    void AddEdep(G4int neuronIndex, G4double edep, G4double stepLength);
     void MarkPrimaryHit(G4int neuronIndex);
 
   private:
     RunAction* fRunAction = nullptr;
     std::array<G4double, N_NEURONS> fEdep{};
+    // Numeratore del LET dose-mediato, Sum(dE_i^2/dx_i) per neurone
+    // (Kanai et al. -- lo stesso concetto usato a NIRS/HIMAC per il
+    // modello RBE clinico): pesare ogni step per il proprio deposito
+    // di energia, non contarlo una volta sola come nel LET track-medio.
+    std::array<G4double, N_NEURONS> fEdepSqOverDx{};
     std::array<G4bool, N_NEURONS> fPrimaryHit{};
 };
 

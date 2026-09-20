@@ -20,10 +20,12 @@ class RunAction : public G4UserRunAction
     void EndOfRunAction(const G4Run*) override;
 
     void RecordEvent(const std::array<G4double, N_NEURONS>& edep,
+                      const std::array<G4double, N_NEURONS>& edepSqOverDx,
                       const std::array<G4bool, N_NEURONS>& primaryHit);
 
   private:
     std::array<G4double, N_NEURONS> fSumEdep{};
+    std::array<G4double, N_NEURONS> fSumEdepSqOverDx{};
     std::array<G4long, N_NEURONS> fSumPrimaryHits{};
     G4long fNEvents = 0;
     std::ofstream fOutFile;
