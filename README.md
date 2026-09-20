@@ -19,7 +19,8 @@ Ventitré esperimenti progressivi, ciascuno costruito sul precedente, con codice
 - **Attrattori:** ring attractor verificato (persistenza, multistabilità, robustezza), catene di attrattori collegati
 - **Decisione:** competizione tra alternative, apprendimento per rinforzo, politica contestuale
 - **Sintesi finale:** struttura spaziale + sinapsi biofisicamente realistiche + densità sinaptica pari al modello più avanzato al mondo (Kuriyama, Akira et al. 2025)
-- **Comunicazione bidirezionale appresa:** dal canale fisso alla sinapsi che impara — adattamento a soglia di scarica, rinforzo Hebbiano a grana di turno, e un test di interferenza tra più messaggi condivisi sulla stessa sinapsi, risolto con un'esplorazione repulsiva
+- **Comunicazione bidirezionale appresa (dominio spiking):** dal fallimento totale alla soluzione completa (interruttore di trasmissione + normalizzazione omeostatica + soppressione di emergenza), verificata su 8 seed indipendenti, estesa a più messaggi e a una rete a tre popolazioni
+- **Fisica delle radiazioni (Geant4):** impatto di fasci ionici clinici del CNAO (protoni, carbonio-12) sulla stessa architettura ad anello, dal plateau al vero picco di Bragg — collegato direttamente alla rete spiking tramite un esperimento di knockout funzionale, con un gradiente dose-risposta verificato
 
 Il resoconto completo (125+ pagine, con ogni esperimento spiegato in dettaglio, codice sorgente incluso, ed equazioni) è in [`report/resoconto_progetto_ESTESO.pdf`](report/resoconto_progetto_ESTESO.pdf) (anche in [`.docx`](report/resoconto_progetto_ESTESO.docx)). Una descrizione più breve è in [`README.pdf`](README.pdf).
 
@@ -31,6 +32,7 @@ Il resoconto completo (125+ pagine, con ogni esperimento spiegato in dettaglio, 
 | [`/figures`](figures) | I grafici prodotti da ogni esperimento |
 | [`/visualizations`](visualizations) | Le visualizzazioni 3D interattive (HTML, autonome) |
 | [`/report`](report) | Il resoconto completo (PDF/DOCX) |
+| [`/geant4_cnao_ring`](geant4_cnao_ring) | Progetto Geant4 (C++): impatto fisico dei fasci CNAO sull'architettura neurale — vedi il README dedicato |
 
 ## Come eseguire
 

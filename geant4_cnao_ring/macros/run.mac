@@ -1,0 +1,12 @@
+# Single (particle, energy) run. Particle type and energy are set
+# from the command line (see cnaoRingImpact.cc usage), NOT here --
+# for carbon-12 the primary must be built via G4IonTable with the
+# correct +6e charge state, which /gun/particle cannot do correctly;
+# that logic lives in PrimaryGeneratorAction.cc.
+#
+# Statistics: start with 1e3-1e4 primaries to check the build runs
+# end-to-end; clinical-scale dose maps benefit from more (1e5+),
+# at a real computational cost given QBBC's full hadronic physics.
+
+/run/initialize
+/run/beamOn 5000

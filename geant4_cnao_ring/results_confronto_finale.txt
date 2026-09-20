@@ -1,0 +1,7 @@
+configurazione   profondita_picco_mm   plateau_MeV   picco_MeV   rapporto
+70 MeV p                      39.5mm         0.118       0.953      8.11x
+150 MeV p                    156.5mm         0.099       0.499      5.06x
+225 MeV p                    315.5mm         0.104       0.996      9.56x
+120 MeV/u C12                 34.5mm         7.068      20.996      2.97x
+260 MeV/u C12                135.5mm         3.504      11.258      3.21x
+400 MeV/u C12                275.5mm         3.254       4.412      1.36x
