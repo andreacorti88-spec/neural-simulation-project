@@ -229,7 +229,7 @@ resoconto, sezioni 5.22-5.26.
    con quanto sono sbilanciati i neuroni spenti tra i due messaggi, non
    un fenomeno di tutto-o-niente.
 
-## Aggiornamenti (sezioni 5.28-5.33)
+## Aggiornamenti (sezioni 5.28-5.34)
 
 - **5.28 -- Gradiente confermato con i protoni**: mappa di dose al picco
   di Bragg per protone 70 MeV, sbilanciamento 4-vs-0 (il piu' netto
@@ -267,6 +267,21 @@ resoconto, sezioni 5.22-5.26.
   6/8, sezione 5.24). Emerge una soglia: serve uno sbilanciamento di
   ALMENO 2 neuroni perche' l'effetto superi il rumore di base della
   rete -- il gradiente si raffina, non si invalida.
+- **5.34 -- Il vero modello MKM di Kase/NIRS**: sostituita l'approssimazione
+  lineare RBE(LET) della 5.31 con il modello MKM (Microdosimetric
+  Kinetic Model) saturazione-corretto usato clinicamente a NIRS/HIMAC
+  (Kase et al. 2011, J Radiat Res 52:59-68 -- lo stesso paper che
+  descrive il TEPC usato di routine per la QA della dose biologica a
+  HIMAC), con i parametri reali delle cellule HSG. Validato PRIMA di
+  pubblicare: applicato ai valori misurati e pubblicati da Kase et al.,
+  riproduce i loro RBE10 entro il 10-15% (es. al punto di riferimento
+  clinico NIRS, LET_d=80 keV/um -> RBE10 calcolato 2.67 contro il
+  riferimento clinico 3.0). Applicato ai nostri dati: RBE10 fino a 3.44
+  per il carbonio al picco (fisicamente sensato), ~1.0 per il protone
+  (come atteso) -- e la conclusione della 5.31 (il gradiente 5.22-5.28
+  regge al raffinamento RBE) si conferma anche col modello clinico
+  vero, non era un artefatto dell'approssimazione lineare. Script
+  riutilizzabile: `analysis/mkm_rbe.py`.
 
 ## Build ed esecuzione
 

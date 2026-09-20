@@ -190,8 +190,67 @@ follow-up findings extend the picture further: a genuine functional
 recovery under extended training after knockout (section 5.29,
 computational analogue of post-lesion compensatory plasticity), and a
 discovered point of no return when an entire message's encoding zone
-is silenced rather than a dose-derived subset (section 5.30). Full
-details: report, sections 5.22-5.33.
+is silenced rather than a dose-derived subset (section 5.30). A real,
+literature-validated MKM (Microdosimetric Kinetic Model) RBE
+calculation — the same formalism used clinically at NIRS/HIMAC — was
+added in section 5.34, replacing the simplified linear RBE(LET)
+approximation of section 5.31; validated against Kase et al.'s own
+published measurements before being trusted, it confirms the earlier
+conclusion (the dose-response gradient is robust to RBE weighting)
+rather than overturning it. Full details: report, sections 5.22-5.34.
+
+## Recent findings (sections 5.28-5.34)
+
+- **5.28 — Gradient confirmed with protons**: Bragg-peak dose map for
+  70 MeV protons, the sharpest overlap imbalance so far (4-vs-0) →
+  7.07x spike-count ratio, 8/8 seeds — the strongest and most
+  consistent effect in the series.
+- **5.29 — Functional recovery after damage**: 5x extended training
+  (300 repetitions) after the most severe knockout (5.28): the damaged
+  message recovers progressively (+294% between the first and second
+  half of extended training, verified across 4 seeds), without ever
+  matching the undamaged message — residual STDP plasticity that
+  compensates, not repairs.
+- **5.30 — A point of no return**: silencing ALL 11 neurons of a
+  message's encoding zone (not just a dose-derived subset) makes the
+  5.29 recovery disappear completely, confirmed across 5 independent
+  runs (1 single run + 4 MC seeds) — compensatory plasticity requires
+  at least one surviving functional exit path.
+- **5.31 — RBE-LET model (Kanai/NIRS-Chiba)**: added dose-averaged LET
+  tracking per neuron (same formalism used clinically at NIRS/HIMAC).
+  The RBE gap between particles is sharp (carbon ~3.3, proton ~1.15 at
+  their respective peaks, consistent with the clinical RBE=3.0
+  reference at 80 keV/um), but within the same depth the neuron ranking
+  barely changes (9/10 overlap) — the 5.22-5.28 gradient holds up to
+  this refinement.
+- **5.32 — A limit discovered: the per-neuron dose map is not
+  reproducible**: added an explicit seed to `cnaoRingImpact` (previously
+  clock-based, different every run). Repeating the same physical
+  configuration across 4 independent seeds gave an average pairwise
+  top-10 overlap of only 1.0/10 — dominated by Poisson noise (~1-2
+  expected direct hits per neuron out of 500k events). The ring's
+  TOTAL dose stays stable (±15%); only its per-neuron distribution is
+  noisy.
+- **5.33 — The gradient on solid statistical ground**: rebuilt the
+  knockout set from the 4-seed-AVERAGED dose map of 5.32 (1-vs-0
+  overlap with the encoding zones) → 1.29x ratio, 6/8 seeds,
+  statistically indistinguishable from the 0-vs-0 negative control
+  (1.39x, 6/8, section 5.24). A threshold emerges: an overlap imbalance
+  of AT LEAST 2 neurons is needed for the effect to rise above the
+  network's baseline noise — the gradient is refined, not invalidated.
+- **5.34 — The real Kase/NIRS MKM model**: replaced the linear RBE(LET)
+  approximation of 5.31 with the actual saturation-corrected MKM used
+  clinically at NIRS/HIMAC (Kase et al. 2011, J Radiat Res 52:59-68 —
+  the same paper describing the TEPC used routinely for biological-dose
+  QA at HIMAC), with real HSG cell parameters. Validated before
+  publishing: applied to Kase et al.'s own published measurements, it
+  reproduces their reported RBE10 within 10-15% (e.g. at the NIRS
+  clinical reference point, LET_d=80 keV/um → RBE10 = 2.67 vs. the
+  clinical reference 3.0). Applied to our data: RBE10 up to 3.44 for
+  carbon at the peak (physically sensible), ~1.0 for the proton (as
+  expected) — the 5.31 conclusion holds with the real clinical model
+  too, not just the crude linear approximation. Reusable script:
+  `analysis/mkm_rbe.py`.
 
 ## Future developments
 
@@ -210,12 +269,10 @@ details: report, sections 5.22-5.33.
    single neuron, the same limit stated in the Villagrasa/Baiocco
    paper. A sensitivity test across different criteria (mean dose
    instead of peak, knockout size) is the natural next step.
-4. **Full clinical MKM-based RBE model**: section 5.31 implemented a
-   simplified linear RBE(LET) approximation anchored to the NIRS
-   reference point (RBE=3.0 at 80 keV/um); replacing it with the actual
-   microdosimetric kinetic model (Kase/Inaniwa, the one used in real
-   HIMAC/CNAO treatment planning systems) would require cell-survival
-   curve parameters (alpha/beta) not currently available.
+4. ~~Full clinical MKM-based RBE model~~ **DONE** (section 5.34) — see
+   above; the remaining gap to the full clinical implementation is a
+   measured y-spectrum (TEPC or track-structure simulation) instead of
+   the LET-based single-value proxy used here.
 5. ~~Knockout at the true Bragg peak~~ **DONE** (section 5.27) — see
    the dose-response gradient discussion above.
 
