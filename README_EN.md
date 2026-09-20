@@ -24,7 +24,7 @@ Thirty-plus progressive experiments, each building on the previous one, with eve
 - **Learned bidirectional communication (spiking domain):** from total failure to a full solution (transmission switch + homeostatic normalization + emergency suppression), verified on 8 independent seeds, extended to multiple messages and a three-population network
 - **Radiation physics (Geant4), integrated with the neural model:** clinical ion beams from CNAO (protons, carbon-12) impacting the same ring-attractor architecture, from the plateau up to the true Bragg peak — directly connected to the spiking network via a functional knockout experiment, producing a verified dose-response gradient, a recovery/compensatory-plasticity finding, a discovered point of no return, an RBE-LET model tied to the clinical methodology pioneered at NIRS/HIMAC (Chiba, Japan), and an honestly-documented Monte Carlo statistics limitation that was found and then corrected
 
-The complete Italian report (130+ pages, every experiment explained in detail, full source code included, equations) is in [`report/resoconto_progetto_ESTESO.pdf`](report/resoconto_progetto_ESTESO.pdf) (also in [`.docx`](report/resoconto_progetto_ESTESO.docx)). A shorter description is in [`README.pdf`](README.pdf) (Italian).
+The complete Italian report (almost 400 pages, every experiment explained in detail, full source code included, equations) is in [`report/resoconto_progetto_ESTESO.pdf`](report/resoconto_progetto_ESTESO.pdf) (also in [`.docx`](report/resoconto_progetto_ESTESO.docx) and in [LaTeX](latex/), compiled to [`latex/main.pdf`](latex/main.pdf)). A shorter description is in [`README.pdf`](README.pdf) (Italian).
 
 ## Repository structure
 

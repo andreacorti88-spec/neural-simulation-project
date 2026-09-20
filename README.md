@@ -24,7 +24,7 @@ Ventitré esperimenti progressivi, ciascuno costruito sul precedente, con codice
 - **Comunicazione bidirezionale appresa (dominio spiking):** dal fallimento totale alla soluzione completa (interruttore di trasmissione + normalizzazione omeostatica + soppressione di emergenza), verificata su 8 seed indipendenti, estesa a più messaggi e a una rete a tre popolazioni
 - **Fisica delle radiazioni (Geant4):** impatto di fasci ionici clinici del CNAO (protoni, carbonio-12) sulla stessa architettura ad anello, dal plateau al vero picco di Bragg — collegato direttamente alla rete spiking tramite un esperimento di knockout funzionale, con un gradiente dose-risposta verificato
 
-Il resoconto completo (125+ pagine, con ogni esperimento spiegato in dettaglio, codice sorgente incluso, ed equazioni) è in [`report/resoconto_progetto_ESTESO.pdf`](report/resoconto_progetto_ESTESO.pdf) (anche in [`.docx`](report/resoconto_progetto_ESTESO.docx)). Una descrizione più breve è in [`README.pdf`](README.pdf).
+Il resoconto completo (quasi 400 pagine, con ogni esperimento spiegato in dettaglio, codice sorgente incluso, ed equazioni) è in [`report/resoconto_progetto_ESTESO.pdf`](report/resoconto_progetto_ESTESO.pdf) (anche in [`.docx`](report/resoconto_progetto_ESTESO.docx) e in [LaTeX](latex/), compilato in [`latex/main.pdf`](latex/main.pdf)). Una descrizione più breve è in [`README.pdf`](README.pdf).
 
 ## Struttura del repository
 
