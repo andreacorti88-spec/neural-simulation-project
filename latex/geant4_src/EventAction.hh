@@ -4,6 +4,7 @@
 #include "G4UserEventAction.hh"
 #include "globals.hh"
 #include <array>
+#include <vector>
 
 class RunAction;
 
@@ -25,6 +26,7 @@ class EventAction : public G4UserEventAction
 
     void AddEdep(G4int neuronIndex, G4double edep, G4double stepLength);
     void MarkPrimaryHit(G4int neuronIndex);
+    void AddSecondaryElectron(G4int neuronIndex, G4double kineticEnergy);
 
   private:
     RunAction* fRunAction = nullptr;
@@ -35,6 +37,11 @@ class EventAction : public G4UserEventAction
     // di energia, non contarlo una volta sola come nel LET track-medio.
     std::array<G4double, N_NEURONS> fEdepSqOverDx{};
     std::array<G4bool, N_NEURONS> fPrimaryHit{};
+    // Energia cinetica (MeV) di ogni elettrone secondario NATO dentro
+    // un neurone in questo evento -- lo spettro necessario per valutare
+    // se un accoppiamento con Geant4-DNA (valido fino a ~1 MeV) ha
+    // senso fisico, sezione 5.39.
+    std::vector<G4double> fSecondaryElectronEnergies{};
 };
 
 #endif

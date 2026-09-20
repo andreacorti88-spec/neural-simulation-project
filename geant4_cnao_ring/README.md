@@ -210,11 +210,19 @@ resoconto, sezioni 5.22-5.26.
    proibitivo nei tempi di questo progetto. Confermato che mediare la
    dose su piu' seed a statistica modesta (5.33) e' la strada giusta,
    non aumentare brutalmente gli eventi per run.
-2. **Livello nanodosimetrico locale**: ri-simulare, con Geant4-DNA, la
-   traccia dettagliata SOLO nei neuroni che ricevono un attraversamento
-   diretto (approccio "track re-simulation" multi-scala, lo stesso
-   principio usato da TOPAS-nBio) -- collegherebbe questo progetto a
-   `geant4dna_icsd` invece di lasciarli separati.
+2. ~~Livello nanodosimetrico locale~~ **FATTO** (sezioni 5.39-5.40):
+   collegato a `geant4dna_icsd` (ora anch'esso dentro `neuroni-progetto/`).
+   Aggiunto il tracking dello spettro degli elettroni secondari nati
+   dentro un neurone (scoperto e corretto un bug: il taglio di
+   produzione di default era troppo grosso, zero secondari registrati
+   finche' non e' stata aggiunta una G4Region dedicata con taglio
+   100nm). Spettro verificato: 100% sotto 1 MeV (mediana 1.86 keV,
+   coerente col dominio di Geant4-DNA). Usate quelle energie reali come
+   primari in `nanoICSD` (mai compilato/eseguito prima d'ora): gli ICSD
+   risultanti si inseriscono coerentemente tra i valori gia' pubblicati
+   nel paper Villagrasa/Baiocco -- il collegamento macro-a-nano e'
+   verificato end-to-end. Vedi il README di `geant4dna_icsd` per i
+   dettagli completi.
 3. ~~Soglia di danno neuronale assoluta~~ **TESTATO** (sezione 5.38): il
    knockout resta un criterio relativo (una soglia assoluta di danno
    biologico non e' comunque consolidata in letteratura per un singolo
@@ -236,7 +244,7 @@ resoconto, sezioni 5.22-5.26.
    con quanto sono sbilanciati i neuroni spenti tra i due messaggi, non
    un fenomeno di tutto-o-niente.
 
-## Aggiornamenti (sezioni 5.28-5.38)
+## Aggiornamenti (sezioni 5.28-5.40)
 
 - **5.28 -- Gradiente confermato con i protoni**: mappa di dose al picco
   di Bragg per protone 70 MeV, sbilanciamento 4-vs-0 (il piu' netto
@@ -312,6 +320,16 @@ resoconto, sezioni 5.22-5.26.
   esattamente come previsto). Il meccanismo generalizza oltre la
   scelta specifica di "esattamente 10 neuroni" -- quarta previsione
   deliberatamente falsificabile confermata in questo progetto.
+- **5.39-5.40 -- Collegamento nanodosimetrico completato**: tracking
+  dello spettro di elettroni secondari nati dentro un neurone (scoperto
+  e corretto un bug: taglio di produzione troppo grosso, zero secondari
+  finche' non e' stata aggiunta una G4Region dedicata). Spettro
+  verificato: 100% sotto 1 MeV, dentro il dominio di Geant4-DNA. Quelle
+  energie reali usate come primari in `nanoICSD` (mai eseguito prima):
+  gli ICSD risultanti si inseriscono coerentemente tra i valori gia'
+  pubblicati nel paper Villagrasa/Baiocco. La catena fisica macro-a-nano
+  e' ora verificata end-to-end. Dettagli completi nel README di
+  `geant4dna_icsd` (ora anch'esso dentro `neuroni-progetto/`).
 
 ## Build ed esecuzione
 

@@ -10,6 +10,9 @@
 #include "G4VisAttributes.hh"
 #include "G4Colour.hh"
 #include "G4PhysicalConstants.hh"
+#include "G4Region.hh"
+#include "G4ProductionCuts.hh"
+#include "G4RegionStore.hh"
 
 DetectorConstruction::DetectorConstruction(G4double ringDepthFromEntry)
   : G4VUserDetectorConstruction(),
@@ -73,6 +76,27 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
   auto visWorld = new G4VisAttributes(G4Colour(0.5, 0.6, 1.0, 0.03));
   visWorld->SetForceWireframe(true);
   logicWorld->SetVisAttributes(visWorld);
+
+  // Sezione 5.39: senza un taglio di produzione dedicato, il default di
+  // QBBC (~1mm) e' molto piu' grande dei neuroni (10um di raggio) --
+  // quasi nessun elettrone secondario (raggio delta) ha un range
+  // sufficiente per essere generato come track esplicito dentro un
+  // volume cosi' piccolo; la sua energia viene invece depositata
+  // localmente come perdita di energia continua, INVISIBILE a un
+  // tracking per-particella (verificato: zero elettroni secondari
+  // registrati su 500.000 eventi prima di questa correzione). Una
+  // G4Region dedicata ai volumi "Neuron", con un taglio molto piu'
+  // fine (100nm, sotto la scala del neurone), fa si' che i raggi delta
+  // prodotti li' dentro vengano effettivamente tracciati come
+  // particelle esplicite -- il prerequisito per qualunque accoppiamento
+  // con Geant4-DNA (che opera per definizione su track espliciti).
+  auto* neuronRegion = new G4Region("NeuronRegion");
+  auto* neuronCuts = new G4ProductionCuts();
+  neuronCuts->SetProductionCut(100.*CLHEP::nm);
+  neuronRegion->SetProductionCuts(neuronCuts);
+  for (auto* logicNeuron : fLogicNeuron) {
+    neuronRegion->AddRootLogicalVolume(logicNeuron);
+  }
 
   return physWorld;
 }

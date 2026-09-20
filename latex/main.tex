@@ -1467,6 +1467,62 @@ Conclusione: il meccanismo causale non dipende dalla scelta specifica di "esatta
 
 \lstinputlisting[language=Python]{scripts/dialogo_spiking_cnao_knockout_top5_mc.py}
 \lstinputlisting[language=Python]{scripts/dialogo_spiking_cnao_knockout_top20_mc.py}
+\subsection{5.39 Il collegamento nanodosimetrico, primo passo: lo spettro degli elettroni secondari}\label{il-collegamento-nanodosimetrico-primo-passo-lo-spettro-degli-elettroni-secondari}
+
+Ultimo sviluppo futuro rimasto nel README di geant4\_cnao\_ring: collegare questo progetto (fisica macroscopica, QBBC) al progetto gemello geant4dna\_icsd (nanodosimetria, Geant4-DNA, verifica del paper Villagrasa/Baiocco 2026), ri-simulando in dettaglio la traccia degli elettroni secondari prodotti nei neuroni colpiti -\/- lo stesso approccio "track re-simulation" multi-scala usato da TOPAS-nBio. Prima di costruire la pipeline completa, una domanda va verificata: gli elettroni secondari prodotti da un fascio clinico CNAO dentro un neurone hanno davvero energie compatibili con Geant4-DNA (valido solo fino a \textasciitilde1 MeV)?
+
+Aggiunto un tracking dedicato (EventAction/RunAction/SteppingAction) per registrare l\textquotesingle energia cinetica di ogni elettrone nato dentro un volume "Neuron". Primo tentativo: ZERO elettroni secondari registrati su 500.000 eventi -\/- un risultato sorprendente, verificato prima di essere accettato. Causa trovata: senza una regione dedicata, il taglio di produzione di default di QBBC (\textasciitilde1mm) e\textquotesingle{} molto piu\textquotesingle{} grande dei neuroni (10um di raggio) -\/- quasi nessun raggio delta ha un range sufficiente per essere generato come particella tracciata esplicitamente in un volume cosi\textquotesingle{} piccolo; la sua energia viene invece depositata localmente come perdita continua, invisibile a un conteggio per-particella (ma gia\textquotesingle{} inclusa nella dose totale calcolata nelle sezioni precedenti -\/- nessun errore li\textquotesingle, solo un limite di questo nuovo tracking).
+
+Corretto aggiungendo una G4Region dedicata ai volumi "Neuron", con un taglio di produzione di 100nm (sotto la scala del neurone). Ripetuta la stessa configurazione (carbonio-12 al picco): 18.021 elettroni secondari espliciti su 500.000 eventi. Spettro: minimo 0.99 keV, massimo 96.2 keV, mediana 1.86 keV, media 3.57 keV -\/- il 100\% sotto 1 MeV, dentro il dominio di validita\textquotesingle{} di Geant4-DNA. Coincidenza notevole: la mediana e la media cadono proprio nell\textquotesingle intervallo di energie (1, 5, 10 keV) testate esplicitamente nel paper Villagrasa/Baiocco che geant4dna\_icsd riproduce -\/- il collegamento non richiederebbe estrapolare oltre il dominio gia\textquotesingle{} validato in quel progetto gemello.
+
+Conclusione: il presupposto fisico dell\textquotesingle accoppiamento multi-scala e\textquotesingle{} confermato empiricamente, non assunto. Il passo naturale successivo (non ancora fatto) e\textquotesingle{} usare direttamente queste energie reali come primari in nanoICSD al posto dei valori monoenergetici del paper, per ottenere ICSD (Ionization Cluster Size Distribution) relative a secondari VERAMENTE prodotti da un fascio CNAO, non a un\textquotesingle energia scelta a tavolino.
+
+\textit{\textbf{Codice sorgente: DetectorConstruction.cc / EventAction.cc / RunAction.cc / SteppingAction.cc (tracking e correzione del taglio di produzione aggiunti in questa sezione)}}
+
+\lstinputlisting[language=C++]{geant4_src/DetectorConstruction.cc}
+\lstinputlisting[language=C++]{geant4_src/EventAction.cc}
+\lstinputlisting[language=C++]{geant4_src/RunAction.cc}
+\lstinputlisting[language=C++]{geant4_src/SteppingAction.cc}
+\subsection{5.40 Collegamento nanodosimetrico completato: ICSD reali da elettroni secondari CNAO}\label{collegamento-nanodosimetrico-completato-icsd-reali-da-elettroni-secondari-cnao}
+
+Chiude il collegamento avviato nella 5.39. Usate le energie REALI dello spettro di elettroni secondari verificato li\textquotesingle{} (mediana 1.86 keV, 90-esimo percentile 7.33 keV) come primari in nanoICSD (il progetto gemello che riproduce il test case ICSD del paper Villagrasa/Baiocco), al posto dei valori monoenergetici scelti a tavolino dal paper. Diametro del bersaglio scelto seguendo la stessa convenzione del paper (8nm sotto \textasciitilde1-5 keV, 100nm sopra): 8nm per la mediana (1860 eV), 100nm per il 90-esimo percentile (7332 eV).
+
+Nota preliminare importante: nanoICSD non era mai stato compilato ne\textquotesingle{} eseguito in nessun ambiente disponibile finora (il suo stesso README lo dichiarava esplicitamente) -\/- eseguito con successo per la prima volta in questa sezione, sulla stessa installazione Geant4 usata per cnaoRingImpact per tutto il progetto.
+
+{\def\LTcaptype{none} % do not increment counter
+\begin{longtable}[]{@{}
+  >{\raggedright\arraybackslash}p{(\linewidth - 8\tabcolsep) * \real{0.2000}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 8\tabcolsep) * \real{0.2000}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 8\tabcolsep) * \real{0.2000}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 8\tabcolsep) * \real{0.2000}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 8\tabcolsep) * \real{0.2000}}@{}}
+\toprule\noalign{}
+\begin{minipage}[b]{\linewidth}\raggedright
+Configurazione
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+M1 (media ionizzazioni)
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+F2
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+F3
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+N eventi
+\end{minipage} \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+Mediana reale, 1860 eV, 8nm & 1.090 & 0.257 & 0.142 & 100000 \\
+90-esimo percentile reale, 7332 eV, 100nm & 6.320 & 0.801 & 0.670 & 100000 \\
+\end{longtable}
+}
+
+Confronto con la griglia gia\textquotesingle{} pubblicata nel paper (stessa opzione fisica, stesso diametro di bersaglio a ogni energia): alla dimensione 8nm, il paper mostra M1 in DIMINUZIONE all\textquotesingle aumentare dell\textquotesingle energia in questo intervallo (300eV-\textgreater5.35, 600eV-\textgreater2.90, 1000eV-\textgreater1.83) -\/- il nostro punto reale a 1860eV (M1=1.09) prosegue esattamente questa stessa tendenza decrescente. Alla dimensione 100nm, il paper mostra 5000eV-\textgreater7.10 e 10000eV-\textgreater4.02 -\/- il nostro punto reale a 7332eV (M1=6.32) cade esattamente TRA questi due valori pubblicati, come atteso da un\textquotesingle interpolazione fisicamente sensata lungo la stessa curva.
+
+Interpretazione: gli elettroni secondari realmente prodotti da un fascio CNAO dentro un neurone producono cluster di ionizzazione nanodosimetrici (ICSD) del tutto compatibili con quelli gia\textquotesingle{} caratterizzati nel paper Villagrasa/Baiocco -\/- nessuna sorpresa ne\textquotesingle{} artefatto, i valori si inseriscono esattamente dove ci si aspetterebbe lungo le curve gia\textquotesingle{} pubblicate. Il collegamento multi-scala tra la fisica macroscopica del fascio clinico (Geant4, QBBC, questo progetto) e la fisica nanodosimetrica del danno locale (Geant4-DNA, geant4dna\_icsd) e\textquotesingle{} quindi completato e verificato end-to-end: dose macroscopica -\textgreater{} spettro di elettroni secondari reali -\textgreater{} ICSD nanodosimetrico coerente con la letteratura -\/- l\textquotesingle intera catena, non solo il primo o l\textquotesingle ultimo anello.
+
+\emph{\textbf{Eseguito con nanoICSD (geant4dna\_icsd/build/nanoICSD), energie prese dallo spettro reale della sezione 5.39}}
+
 \section{6. Realismo biofisico e densita\textquotesingle{} sinaptica: confronto con l\textquotesingle Allen Institute}\label{realismo-biofisico-e-densita-sinaptica-confronto-con-lallen-institute}
 
 L\textquotesingle ultima fase del progetto nasce da un confronto esplicito con lo stato dell\textquotesingle arte reale della ricerca (sezione 4.5): il presente progetto aveva superato l\textquotesingle Allen Institute nel numero puro di neuroni simulati (40 milioni contro \textasciitilde10 milioni), ma con una densita\textquotesingle{} sinaptica per neurone drasticamente inferiore (\textasciitilde31 contro \textasciitilde2.600) e un dettaglio biofisico per neurone molto piu\textquotesingle{} semplice. Questa sezione descrive il tentativo di colmare entrambi i divari contemporaneamente.
@@ -1849,6 +1905,8 @@ geant4\_cnao\_ring/analysis/mkm\_rbe.py (dataset completo) & 5.35 & MKM su tutte
 geant4\_cnao\_ring/src/SteppingAction.cc (diagnostica CNAO\_DEBUG\_NEURON) & 5.36 & Verificato empiricamente (non solo ipotizzato) il picco di LET anomalo della 5.35: e\textquotesingle{} il protone primario quasi fermo (range straggling), non un frammento secondario -\/- collegato al dibattito reale sull\textquotesingle RBE variabile al bordo distale in protonterapia \\
 build/results\_highstat/ (carbonio 5M eventi, seed 501/502) & 5.37 & Quantificato: 10x eventi migliora la sovrapposizione da 1.0/10 (puro rumore) a 2/10 -\/- non basta; confermato che mediare su seed (5.33) e\textquotesingle{} piu\textquotesingle{} efficiente che aumentare gli eventi \\
 dialogo\_spiking\_cnao\_knockout\_top5\_mc.py / top20\_mc.py & 5.38 & La dimensione del knockout (5, 10, 20 neuroni) non e\textquotesingle{} speciale: TOP-5 (overlap 0-vs-0) nullo come previsto, TOP-20 (overlap invertito) inverte l\textquotesingle effetto (1.74x, 7/8) esattamente come previsto \\
+geant4\_cnao\_ring (DetectorConstruction.cc, taglio di produzione) & 5.39 & Primo passo del collegamento nanodosimetrico: scoperto e corretto un bug (taglio di produzione troppo grosso), spettro reale degli elettroni secondari verificato (100\% sotto 1 MeV, mediana 1.86 keV) -\/- il presupposto fisico dell\textquotesingle accoppiamento con Geant4-DNA e\textquotesingle{} confermato \\
+geant4dna\_icsd/build/nanoICSD (energie reali dalla 5.39) & 5.40 & Collegamento nanodosimetrico completato: ICSD da energie di elettroni secondari REALI (CNAO) si inseriscono coerentemente tra i punti gia\textquotesingle{} pubblicati nel paper Villagrasa/Baiocco -\/- catena macro-a-nano verificata end-to-end \\
 \end{longtable}
 }
 

@@ -22,7 +22,7 @@ Ventitré esperimenti progressivi, ciascuno costruito sul precedente, con codice
 - **Decisione:** competizione tra alternative, apprendimento per rinforzo, politica contestuale
 - **Sintesi finale:** struttura spaziale + sinapsi biofisicamente realistiche + densità sinaptica pari al modello più avanzato al mondo (Kuriyama, Akira et al. 2025)
 - **Comunicazione bidirezionale appresa (dominio spiking):** dal fallimento totale alla soluzione completa (interruttore di trasmissione + normalizzazione omeostatica + soppressione di emergenza), verificata su 8 seed indipendenti, estesa a più messaggi e a una rete a tre popolazioni
-- **Fisica delle radiazioni (Geant4):** impatto di fasci ionici clinici del CNAO (protoni, carbonio-12) sulla stessa architettura ad anello, dal plateau al vero picco di Bragg — collegato direttamente alla rete spiking tramite un esperimento di knockout funzionale, con un gradiente dose-risposta verificato
+- **Fisica delle radiazioni (Geant4), su due scale collegate:** impatto di fasci ionici clinici del CNAO (protoni, carbonio-12) sulla stessa architettura ad anello, dal plateau al vero picco di Bragg — collegato direttamente alla rete spiking tramite un esperimento di knockout funzionale, con un gradiente dose-risposta verificato, un recupero funzionale, un punto di non ritorno, un modello RBE clinico (Kase/NIRS-Chiba) validato, e infine collegato a livello nanodosimetrico (Geant4-DNA) agli elettroni secondari realmente prodotti nei neuroni colpiti — la catena fisica macroscopica-a-nanoscopica verificata end-to-end
 
 Il resoconto completo (quasi 400 pagine, con ogni esperimento spiegato in dettaglio, codice sorgente incluso, ed equazioni) è in [`report/resoconto_progetto_ESTESO.pdf`](report/resoconto_progetto_ESTESO.pdf) (anche in [`.docx`](report/resoconto_progetto_ESTESO.docx) e in [LaTeX](latex/), compilato in [`latex/main.pdf`](latex/main.pdf)). Una descrizione più breve è in [`README.pdf`](README.pdf).
 
@@ -35,6 +35,7 @@ Il resoconto completo (quasi 400 pagine, con ogni esperimento spiegato in dettag
 | [`/visualizations`](visualizations) | Le visualizzazioni 3D interattive (HTML, autonome) |
 | [`/report`](report) | Il resoconto completo (PDF/DOCX) |
 | [`/geant4_cnao_ring`](geant4_cnao_ring) | Progetto Geant4 (C++): impatto fisico dei fasci CNAO sull'architettura neurale — vedi il README dedicato |
+| [`/geant4dna_icsd`](geant4dna_icsd) | Progetto Geant4-DNA (C++): nanodosimetria a livello di elettroni secondari, collegato a `geant4_cnao_ring` (sezioni 5.39-5.40) — vedi il README dedicato |
 
 ## Come eseguire
 

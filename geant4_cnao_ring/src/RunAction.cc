@@ -14,11 +14,13 @@ void RunAction::BeginOfRunAction(const G4Run*)
   fSumEdepSqOverDx.fill(0.);
   fSumPrimaryHits.fill(0);
   fNEvents = 0;
+  fSecondaryElectronSpectrum.clear();
 }
 
 void RunAction::RecordEvent(const std::array<G4double, N_NEURONS>& edep,
                              const std::array<G4double, N_NEURONS>& edepSqOverDx,
-                             const std::array<G4bool, N_NEURONS>& primaryHit)
+                             const std::array<G4bool, N_NEURONS>& primaryHit,
+                             const std::vector<G4double>& secondaryElectronEnergies)
 {
   for (G4int i = 0; i < N_NEURONS; ++i) {
     fSumEdep[i] += edep[i];
@@ -26,6 +28,9 @@ void RunAction::RecordEvent(const std::array<G4double, N_NEURONS>& edep,
     if (primaryHit[i]) fSumPrimaryHits[i] += 1;
   }
   fNEvents += 1;
+  for (G4double e : secondaryElectronEnergies) {
+    fSecondaryElectronSpectrum.push_back(e);
+  }
 }
 
 void RunAction::EndOfRunAction(const G4Run* run)
@@ -52,4 +57,18 @@ void RunAction::EndOfRunAction(const G4Run* run)
         << fSumPrimaryHits[i] << "," << hitFraction << "," << doseAvgLET << "\n";
   }
   out.close();
+
+  // Spettro degli elettroni secondari nati dentro un neurone (sezione
+  // 5.39): un'energia cinetica (keV) per riga, cosi' come creati --
+  // input per valutare l'accoppiamento con Geant4-DNA.
+  std::ostringstream specName;
+  specName << "secondary_electron_spectrum_run" << run->GetRunID() << ".csv";
+  std::ofstream specOut(specName.str());
+  specOut << "# n_events=" << fNEvents << " n_secondary_electrons="
+          << fSecondaryElectronSpectrum.size() << "\n";
+  specOut << "kinetic_energy_keV\n";
+  for (G4double e : fSecondaryElectronSpectrum) {
+    specOut << (e / CLHEP::keV) << "\n";
+  }
+  specOut.close();
 }

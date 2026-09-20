@@ -22,7 +22,7 @@ Thirty-plus progressive experiments, each building on the previous one, with eve
 - **Decision-making:** competition between alternatives, reinforcement learning, contextual policy
 - **Final synthesis:** spatial structure + biophysically realistic synapses + synaptic density matching the most advanced published model to date (Kuriyama, Akira et al. 2025)
 - **Learned bidirectional communication (spiking domain):** from total failure to a full solution (transmission switch + homeostatic normalization + emergency suppression), verified on 8 independent seeds, extended to multiple messages and a three-population network
-- **Radiation physics (Geant4), integrated with the neural model:** clinical ion beams from CNAO (protons, carbon-12) impacting the same ring-attractor architecture, from the plateau up to the true Bragg peak — directly connected to the spiking network via a functional knockout experiment, producing a verified dose-response gradient, a recovery/compensatory-plasticity finding, a discovered point of no return, an RBE-LET model tied to the clinical methodology pioneered at NIRS/HIMAC (Chiba, Japan), and an honestly-documented Monte Carlo statistics limitation that was found and then corrected
+- **Radiation physics (Geant4), across two connected scales:** clinical ion beams from CNAO (protons, carbon-12) impacting the same ring-attractor architecture, from the plateau up to the true Bragg peak — directly connected to the spiking network via a functional knockout experiment, producing a verified dose-response gradient, a recovery/compensatory-plasticity finding, a discovered point of no return, a validated clinical RBE model (Kase/NIRS-Chiba), and finally coupled at the nanodosimetric level (Geant4-DNA) to the real secondary electrons produced inside hit neurons — the macroscopic-to-nanoscopic physical chain verified end-to-end
 
 The complete Italian report (almost 400 pages, every experiment explained in detail, full source code included, equations) is in [`report/resoconto_progetto_ESTESO.pdf`](report/resoconto_progetto_ESTESO.pdf) (also in [`.docx`](report/resoconto_progetto_ESTESO.docx) and in [LaTeX](latex/), compiled to [`latex/main.pdf`](latex/main.pdf)). A shorter description is in [`README.pdf`](README.pdf) (Italian).
 
@@ -35,6 +35,7 @@ The complete Italian report (almost 400 pages, every experiment explained in det
 | [`/visualizations`](visualizations) | Interactive 3D visualizations (self-contained HTML) |
 | [`/report`](report) | Full report (PDF/DOCX, Italian) and the English project summary |
 | [`/geant4_cnao_ring`](geant4_cnao_ring) | Geant4 project (C++): physical impact of CNAO beams on the neural architecture — see the dedicated README ([English version](geant4_cnao_ring/README_EN.md)) |
+| [`/geant4dna_icsd`](geant4dna_icsd) | Geant4-DNA project (C++): nanodosimetry at the secondary-electron level, coupled to `geant4_cnao_ring` (sections 5.39-5.40) — dedicated README (Italian only for now) |
 
 ## How to run
 

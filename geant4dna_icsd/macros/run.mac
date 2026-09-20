@@ -1,0 +1,12 @@
+# Single-energy-point run, matching one cell of Table 3/4 in the paper.
+# Edit /gun/energy and rerun (or use scan_energies.sh) to cover the
+# full grid: 20, 50, 100, 300, 600, 1000, 5000, 10000 eV.
+#
+# NOTE on statistics: the paper recommends ~1e5 events per point for
+# <5% statistical uncertainty on the ICSD. Start small (1e4) to check
+# the build works end-to-end before committing to full-length runs.
+
+/run/initialize
+/gun/particle e-
+/gun/energy 100 eV
+/run/beamOn 10000

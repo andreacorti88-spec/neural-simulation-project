@@ -55,7 +55,19 @@ void SteppingAction::UserSteppingAction(const G4Step* step)
   // ParentID==0 identifies the primary proton/ion track itself
   // (as opposed to any secondary electron, delta-ray, or nuclear
   // fragment produced along the way).
-  if (step->GetTrack()->GetParentID() == 0) {
+  const G4Track* track = step->GetTrack();
+  if (track->GetParentID() == 0) {
     fEventAction->MarkPrimaryHit(neuronIndex);
+  }
+
+  // Sezione 5.39: registra l'energia cinetica di ogni elettrone
+  // secondario NATO dentro questo neurone (primo step del track,
+  // pre-step point ancora nel volume "Neuron") -- lo spettro
+  // necessario per valutare un accoppiamento con Geant4-DNA (valido
+  // solo fino a ~1 MeV), invece di assumerlo senza verificarlo.
+  if (track->GetParentID() != 0
+      && track->GetParticleDefinition()->GetParticleName() == "e-"
+      && track->GetCurrentStepNumber() == 1) {
+    fEventAction->AddSecondaryElectron(neuronIndex, preStep->GetKineticEnergy());
   }
 }
