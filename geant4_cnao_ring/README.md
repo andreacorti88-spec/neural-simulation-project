@@ -203,9 +203,13 @@ resoconto, sezioni 5.22-5.26.
 
 ## Sviluppi futuri
 
-1. **Statistica maggiore** (1e6-1e7 primari) per una mappa punto-per-punto
-   pulita, parallelizzabile per configurazione come gia' fatto per
-   `nanoICSD` (`scan_energies.sh`).
+1. ~~Statistica maggiore~~ **TESTATO** (sezione 5.37): 10x eventi
+   (5.000.000 invece di 500.000) migliora la sovrapposizione top-10 solo
+   da 1.0/10 (puro rumore) a 2/10 -- non basta. Estrapolando lo stesso
+   scaling servirebbe un ulteriore fattore 100-1000, computazionalmente
+   proibitivo nei tempi di questo progetto. Confermato che mediare la
+   dose su piu' seed a statistica modesta (5.33) e' la strada giusta,
+   non aumentare brutalmente gli eventi per run.
 2. **Livello nanodosimetrico locale**: ri-simulare, con Geant4-DNA, la
    traccia dettagliata SOLO nei neuroni che ricevono un attraversamento
    diretto (approccio "track re-simulation" multi-scala, lo stesso
@@ -229,7 +233,7 @@ resoconto, sezioni 5.22-5.26.
    con quanto sono sbilanciati i neuroni spenti tra i due messaggi, non
    un fenomeno di tutto-o-niente.
 
-## Aggiornamenti (sezioni 5.28-5.34)
+## Aggiornamenti (sezioni 5.28-5.37)
 
 - **5.28 -- Gradiente confermato con i protoni**: mappa di dose al picco
   di Bragg per protone 70 MeV, sbilanciamento 4-vs-0 (il piu' netto
@@ -282,6 +286,22 @@ resoconto, sezioni 5.22-5.26.
   regge al raffinamento RBE) si conferma anche col modello clinico
   vero, non era un artefatto dell'approssimazione lineare. Script
   riutilizzabile: `analysis/mkm_rbe.py`.
+- **5.35 -- Il modello MKM su tutte e sei le configurazioni CNAO**:
+  completate le quattro configurazioni mancanti con tracking del LET.
+  Sovrapposizione fisica/biologica 9-10/10 in TUTTE e sei -- conferma
+  generalizzata. Due osservazioni non banali: overkill del carbonio
+  (RBE10 max si stabilizza ~3.44 anche se il LET massimo cresce) e un
+  RBE anomalo per il protone a 150 MeV (fino a 1.46).
+- **5.36 -- Verificato, non ipotizzato**: diagnostica per-step aggiunta
+  per identificare la causa dell'anomalia della 5.35. Non e' un
+  frammento secondario come ipotizzato: e' il protone primario stesso,
+  quasi fermo (range straggling) -- lo stesso meccanismo dietro il
+  dibattito reale sull'RBE elevato al bordo distale in protonterapia.
+- **5.37 -- Quantificato il costo di una statistica maggiore**: 10x
+  eventi (5.000.000 invece di 500.000) migliora la sovrapposizione
+  top-10 solo da 1.0/10 (puro rumore) a 2/10 -- non basta. Confermato
+  che mediare su seed (5.33) e' molto piu' efficiente che aumentare gli
+  eventi per run.
 
 ## Build ed esecuzione
 
