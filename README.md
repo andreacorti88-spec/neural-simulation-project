@@ -8,6 +8,8 @@ Un percorso completo di simulazione neurale computazionale — dalla scala di un
 
 ![Rete a 118.000 neuroni](figures/rete_realistica_118K.png)
 
+*([English version](README_EN.md) available — shorter Italian sections, full English project summary in [`report/PROJECT_SUMMARY_EN.md`](report/PROJECT_SUMMARY_EN.md).)*
+
 ## Cosa contiene questo repository
 
 Ventitré esperimenti progressivi, ciascuno costruito sul precedente, con codice verificato eseguendolo realmente (non solo scritto):

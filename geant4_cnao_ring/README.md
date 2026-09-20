@@ -1,5 +1,7 @@
 # cnaoRingImpact — impatto fisico di fasci ionici CNAO su un'architettura a ring attractor
 
+*([English version](README_EN.md))*
+
 **Parte integrante di `neuroni-progetto`** (non un progetto satellite):
 vive in `neuroni-progetto/geant4_cnao_ring/`, stesso repository Git dei
 codici Brian2. Due linguaggi (C++/Geant4 per la fisica, Python/Brian2 per
@@ -227,6 +229,45 @@ resoconto, sezioni 5.22-5.26.
    con quanto sono sbilanciati i neuroni spenti tra i due messaggi, non
    un fenomeno di tutto-o-niente.
 
+## Aggiornamenti (sezioni 5.28-5.33)
+
+- **5.28 -- Gradiente confermato con i protoni**: mappa di dose al picco
+  di Bragg per protone 70 MeV, sbilanciamento 4-vs-0 (il piu' netto
+  finora) -> rapporto 7.07x, 8/8 seed, l'effetto piu' forte e piu'
+  consistente della serie.
+- **5.29 -- Recupero funzionale dopo il danno**: training esteso 5x (300
+  ripetizioni) dopo il knockout piu' severo (5.28): il messaggio
+  danneggiato recupera progressivamente (+294% tra prima e seconda meta'
+  del training, verificato su 4 seed), senza mai eguagliare il messaggio
+  sano -- plasticita' STDP residua che compensa, non ripara.
+- **5.30 -- Punto di non ritorno**: spegnendo TUTTI gli 11 neuroni della
+  zona di codifica di un messaggio (non piu' un sotto-insieme a dose
+  fisica), il recupero della 5.29 sparisce del tutto, confermato su 5
+  run indipendenti (1 singolo + 4 seed MC) -- la plasticita' compensativa
+  richiede che sopravviva almeno una via d'uscita funzionante.
+- **5.31 -- Modello RBE-LET (Kanai/NIRS-Chiba)**: aggiunto il tracking
+  del LET dose-mediato per neurone (stesso formalismo usato a NIRS/HIMAC
+  per il calcolo clinico della dose biologica). Il divario RBE tra
+  particelle e' netto (carbonio ~3.3, protone ~1.15 al rispettivo picco,
+  coerente col riferimento clinico RBE=3.0 a 80 keV/um), ma entro la
+  stessa profondita' la classifica dei neuroni cambia pochissimo (9/10
+  di sovrapposizione) -- il gradiente 5.22-5.28 regge al raffinamento.
+- **5.32 -- Limite scoperto: la mappa di dose per-neurone non e'
+  riproducibile**: aggiunto un seed esplicito a `cnaoRingImpact` (prima
+  basato sull'orologio, diverso a ogni run). Ripetendo la stessa
+  configurazione fisica su 4 seed indipendenti, la sovrapposizione media
+  tra le classifiche top-10 e' solo 1.0/10 -- dominata dal rumore di
+  Poisson (~1-2 colpi diretti attesi per neurone su 500k eventi). La
+  dose TOTALE sull'anello resta stabile (+-15%); e' solo la sua
+  distribuzione tra i 100 neuroni a essere rumorosa.
+- **5.33 -- Il gradiente su basi statistiche solide**: ricostruito il
+  set di knockout dalla dose MEDIATA sui 4 seed della 5.32 (overlap
+  1-vs-0 con le zone di codifica) -> rapporto 1.29x, 6/8 seed,
+  statisticamente indistinguibile dal controllo negativo 0-vs-0 (1.39x,
+  6/8, sezione 5.24). Emerge una soglia: serve uno sbilanciamento di
+  ALMENO 2 neuroni perche' l'effetto superi il rumore di base della
+  rete -- il gradiente si raffina, non si invalida.
+
 ## Build ed esecuzione
 
 Stessi prerequisiti di `nanoICSD` (Geant4 11.x), ma qui bastano i
@@ -238,9 +279,12 @@ mkdir build && cd build
 cmake -DGeant4_DIR=/path/a/geant4-install/lib/cmake/Geant4 ..
 make -j$(nproc)
 
-# singola configurazione: particella (0=protone,1=carbonio-12), energia MeV totale
-./cnaoRingImpact macros/run.mac 0 150     # protone 150 MeV
-./cnaoRingImpact macros/run.mac 1 3120    # carbonio-12 a 260 MeV/u (260*12=3120 MeV totali)
+# singola configurazione: particella (0=protone,1=carbonio-12), energia MeV totale,
+# profondita' anello mm, [seed esplicito -- default: orologio di sistema, diverso a ogni run]
+./cnaoRingImpact macros/run.mac 0 150            # protone 150 MeV, plateau (2mm)
+./cnaoRingImpact macros/run.mac 1 3120           # carbonio-12 260 MeV/u (260*12=3120 MeV totali)
+./cnaoRingImpact macros/run.mac 0 70 39.5 12345  # protone 70 MeV al picco (39.5mm), seed fisso
+                                                  # -- per verifica MC multi-seed, vedi sezione 5.32
 
 python3 ../analysis/analyze_ring_dose.py results/
 ```
