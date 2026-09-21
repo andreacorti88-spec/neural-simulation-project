@@ -244,7 +244,7 @@ resoconto, sezioni 5.22-5.26.
    con quanto sono sbilanciati i neuroni spenti tra i due messaggi, non
    un fenomeno di tutto-o-niente.
 
-## Aggiornamenti (sezioni 5.28-5.40)
+## Aggiornamenti (sezioni 5.28-5.41)
 
 - **5.28 -- Gradiente confermato con i protoni**: mappa di dose al picco
   di Bragg per protone 70 MeV, sbilanciamento 4-vs-0 (il piu' netto
@@ -320,15 +320,18 @@ resoconto, sezioni 5.22-5.26.
   esattamente come previsto). Il meccanismo generalizza oltre la
   scelta specifica di "esattamente 10 neuroni" -- quarta previsione
   deliberatamente falsificabile confermata in questo progetto.
-- **5.39-5.40 -- Collegamento nanodosimetrico completato**: tracking
-  dello spettro di elettroni secondari nati dentro un neurone (scoperto
-  e corretto un bug: taglio di produzione troppo grosso, zero secondari
-  finche' non e' stata aggiunta una G4Region dedicata). Spettro
-  verificato: 100% sotto 1 MeV, dentro il dominio di Geant4-DNA. Quelle
-  energie reali usate come primari in `nanoICSD` (mai eseguito prima):
-  gli ICSD risultanti si inseriscono coerentemente tra i valori gia'
-  pubblicati nel paper Villagrasa/Baiocco. La catena fisica macro-a-nano
-  e' ora verificata end-to-end. Dettagli completi nel README di
+- **5.39-5.41 -- Collegamento nanodosimetrico completato e verificato**:
+  tracking dello spettro di elettroni secondari nati dentro un neurone
+  (scoperto e corretto un bug: taglio di produzione troppo grosso, zero
+  secondari finche' non e' stata aggiunta una G4Region dedicata).
+  Spettro verificato: 100% sotto 1 MeV, dentro il dominio di Geant4-DNA.
+  Quelle energie reali usate come primari in `nanoICSD` (mai eseguito
+  prima): gli ICSD risultanti si inseriscono coerentemente tra i valori
+  gia' pubblicati nel paper Villagrasa/Baiocco. Verifica MC su 4 seed
+  (5.41): M1=1.090 confermato stabile (CV 0.34%) -- a differenza della
+  mappa di dose per-neurone (5.32), qui non c'e' un problema di rumore
+  statistico. La catena fisica macro-a-nano e' ora verificata
+  end-to-end. Dettagli completi nel README di
   `geant4dna_icsd` (ora anch'esso dentro `neuroni-progetto/`).
 
 ## Build ed esecuzione

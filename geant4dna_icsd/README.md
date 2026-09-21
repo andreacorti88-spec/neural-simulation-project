@@ -125,7 +125,7 @@ core o a un cluster.
   statistico) da quelli pubblicati per l'opzione 2, il problema è quasi
   certamente nella geometria o nel process name, non nella fisica.
 
-## Collegamento a geant4_cnao_ring (sezioni 5.39-5.40)
+## Collegamento a geant4_cnao_ring (sezioni 5.39-5.41)
 
 Il "livello nanodosimetrico locale" elencato come sviluppo futuro nel
 README di `geant4_cnao_ring` e' stato completato:
@@ -158,6 +158,18 @@ README di `geant4_cnao_ring` e' stato completato:
    decrescente; 100nm: 5000eV->7.10, il nostro 7332eV->6.32, 10000eV
    ->4.02, esattamente tra i due) -- nessuna sorpresa, il collegamento
    macro-a-nano e' verificato end-to-end.
+3. **Sezione 5.41**: nanoICSD usava lo stesso pattern di seed basato
+   sull'orologio di cnaoRingImpact prima della correzione 5.32 --
+   verificato se M1=1.090 fosse un dato solido o un run rumoroso.
+   Aggiunto un seed esplicito (`./nanoICSD [macro] [opzione] [diametro]
+   [seed]`) e ripetuta la stessa configurazione su 4 seed indipendenti:
+   M1 = 1.0949, 1.0892, 1.0954, 1.0883 -- coefficiente di variazione
+   solo 0.34%. A DIFFERENZA della mappa di dose per-neurone (5.32), qui
+   non c'e' un problema di rumore statistico: ogni evento contribuisce
+   direttamente alla statistica aggregata, senza la suddivisione in
+   100 bin sparsi che rendeva rumorosa la mappa di dose. Il valore
+   della 5.40 e' confermato solido, non un artefatto di un seed
+   fortunato.
 
 ## Struttura del progetto
 

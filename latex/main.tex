@@ -1523,6 +1523,18 @@ Interpretazione: gli elettroni secondari realmente prodotti da un fascio CNAO de
 
 \emph{\textbf{Eseguito con nanoICSD (geant4dna\_icsd/build/nanoICSD), energie prese dallo spettro reale della sezione 5.39}}
 
+\subsection{5.41 Verifica Monte Carlo di nanoICSD: a differenza della mappa di dose, gli ICSD sono stabili}\label{verifica-monte-carlo-di-nanoicsd-a-differenza-della-mappa-di-dose-gli-icsd-sono-stabili}
+
+Domanda naturale dopo la 5.40, per lo stesso motivo che ha portato alla scoperta della 5.32: nanoICSD usa lo stesso pattern di seed basato sull\textquotesingle orologio di sistema che cnaoRingImpact usava prima della correzione. Il valore M1=1.090 trovato per l\textquotesingle energia reale mediana (1860 eV) e\textquotesingle{} un dato solido o un singolo run rumoroso?
+
+Aggiunto un parametro di seed esplicito a nanoICSD.cc (stessa correzione della sezione 5.32) e ripetuta la stessa configurazione (1860 eV, 8nm, opzione 2) su 4 seed indipendenti (201-204), 100.000 eventi ciascuno. Risultato: M1 = 1.0949, 1.0892, 1.0954, 1.0883 -\/- coefficiente di variazione solo 0.34\% (media 1.0920, dev.std 0.0037). F2 ancora piu\textquotesingle{} stabile (CV 0.14\%). Il valore del run singolo della sezione 5.40 (M1=1.090) e\textquotesingle{} confermato, non un artefatto di un seed fortunato.
+
+A differenza della mappa di dose per-neurone (5.32), qui NON c\textquotesingle e\textquotesingle{} un problema di rumore statistico -\/- e la ragione e\textquotesingle{} chiara meccanicisticamente: nel caso della dose, 500.000 eventi venivano distribuiti su 100 neuroni separati, dando statistica sparsa per ciascuno (\textasciitilde1-2 colpi attesi per bin). Qui invece ogni singolo evento (100.000 per run) contribuisce DIRETTAMENTE alla statistica aggregata M1/F2/F3 -\/- nessuna suddivisione in bin separati, quindi una statistica effettiva enormemente migliore per la stessa dimensione di campione.
+
+Conclusione: il collegamento nanodosimetrico completato nella 5.39-5.40 riposa su basi statistiche solide, non su un singolo run non verificato -\/- una verifica di rigore fatta per completezza (stesso principio applicato ovunque in questo progetto), che in questo caso conferma il risultato invece di correggerlo, a differenza di quanto successo con la mappa di dose fisica.
+
+\emph{\textbf{Verificato con nanoICSD (seed espliciti 201-204), geant4dna\_icsd/build/results\_mc\_seed\_check/}}
+
 \section{6. Realismo biofisico e densita\textquotesingle{} sinaptica: confronto con l\textquotesingle Allen Institute}\label{realismo-biofisico-e-densita-sinaptica-confronto-con-lallen-institute}
 
 L\textquotesingle ultima fase del progetto nasce da un confronto esplicito con lo stato dell\textquotesingle arte reale della ricerca (sezione 4.5): il presente progetto aveva superato l\textquotesingle Allen Institute nel numero puro di neuroni simulati (40 milioni contro \textasciitilde10 milioni), ma con una densita\textquotesingle{} sinaptica per neurone drasticamente inferiore (\textasciitilde31 contro \textasciitilde2.600) e un dettaglio biofisico per neurone molto piu\textquotesingle{} semplice. Questa sezione descrive il tentativo di colmare entrambi i divari contemporaneamente.
@@ -1907,6 +1919,7 @@ build/results\_highstat/ (carbonio 5M eventi, seed 501/502) & 5.37 & Quantificat
 dialogo\_spiking\_cnao\_knockout\_top5\_mc.py / top20\_mc.py & 5.38 & La dimensione del knockout (5, 10, 20 neuroni) non e\textquotesingle{} speciale: TOP-5 (overlap 0-vs-0) nullo come previsto, TOP-20 (overlap invertito) inverte l\textquotesingle effetto (1.74x, 7/8) esattamente come previsto \\
 geant4\_cnao\_ring (DetectorConstruction.cc, taglio di produzione) & 5.39 & Primo passo del collegamento nanodosimetrico: scoperto e corretto un bug (taglio di produzione troppo grosso), spettro reale degli elettroni secondari verificato (100\% sotto 1 MeV, mediana 1.86 keV) -\/- il presupposto fisico dell\textquotesingle accoppiamento con Geant4-DNA e\textquotesingle{} confermato \\
 geant4dna\_icsd/build/nanoICSD (energie reali dalla 5.39) & 5.40 & Collegamento nanodosimetrico completato: ICSD da energie di elettroni secondari REALI (CNAO) si inseriscono coerentemente tra i punti gia\textquotesingle{} pubblicati nel paper Villagrasa/Baiocco -\/- catena macro-a-nano verificata end-to-end \\
+geant4dna\_icsd/nanoICSD.cc (seed esplicito, verifica 4 seed) & 5.41 & Verifica Monte Carlo di nanoICSD: M1=1.090 confermato stabile (CV 0.34\% su 4 seed) -\/- a differenza della mappa di dose (5.32), qui non c\textquotesingle e\textquotesingle{} un problema di rumore statistico \\
 \end{longtable}
 }
 
