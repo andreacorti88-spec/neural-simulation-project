@@ -172,6 +172,14 @@ def main():
     result = ''.join(out)
     result = result.replace('\n\\begin{document}', LISTINGS_SETUP, 1)
 
+    # Bug fix: filenames like dialogo_spiking_bidirezionale_gate.py have no
+    # break points for LaTeX (an escaped underscore \_ does not by itself
+    # allow a line break), so in narrow table cells (the final File/
+    # Sezione/Contenuto index table) long filenames overflowed into the
+    # neighbouring column instead of wrapping. \lstinputlisting paths use
+    # plain (non-escaped) underscores and are therefore untouched by this.
+    result = result.replace('\\_', '\\_\\allowbreak{}')
+
     with open(OUT_TEX, 'w', encoding='utf-8') as f:
         f.write(result)
 
