@@ -23,7 +23,9 @@ class RunAction : public G4UserRunAction
     void RecordEvent(const std::array<G4double, N_NEURONS>& edep,
                       const std::array<G4double, N_NEURONS>& edepSqOverDx,
                       const std::array<G4bool, N_NEURONS>& primaryHit,
-                      const std::vector<G4double>& secondaryElectronEnergies);
+                      const std::vector<G4double>& secondaryElectronEnergies,
+                      const std::array<G4long, N_NEURONS>& secondaryElectronCount,
+                      const std::array<G4double, N_NEURONS>& estimatedDSB);
 
   private:
     std::array<G4double, N_NEURONS> fSumEdep{};
@@ -34,6 +36,9 @@ class RunAction : public G4UserRunAction
     // Spettro di tutti gli elettroni secondari nati dentro un neurone,
     // accumulato su tutto il run (sezione 5.39).
     std::vector<G4double> fSecondaryElectronSpectrum{};
+    // Sezione 5.44: stesse quantita' ma per neurone, non solo aggregate.
+    std::array<G4long, N_NEURONS> fSumSecondaryElectronCount{};
+    std::array<G4double, N_NEURONS> fSumEstimatedDSB{};
 };
 
 #endif

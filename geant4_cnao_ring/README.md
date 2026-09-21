@@ -244,7 +244,7 @@ resoconto, sezioni 5.22-5.26.
    con quanto sono sbilanciati i neuroni spenti tra i due messaggi, non
    un fenomeno di tutto-o-niente.
 
-## Aggiornamenti (sezioni 5.28-5.43)
+## Aggiornamenti (sezioni 5.28-5.44)
 
 - **5.28 -- Gradiente confermato con i protoni**: mappa di dose al picco
   di Bragg per protone 70 MeV, sbilanciamento 4-vs-0 (il piu' netto
@@ -354,6 +354,14 @@ resoconto, sezioni 5.22-5.26.
   Media pesata finale: SB/primario=0.1674, DSB/primario=0.01753,
   frazione DSB=9.5% -- la stima piu' rappresentativa, al posto dei due
   estremi della 5.42.
+- **5.44 -- Il ponte fisica-neuroscienza chiuso fino al DNA**: esteso
+  il tracking per registrare danno DSB stimato PER NEURONE (non solo
+  aggregato sull'intero anello come nella 5.39-5.43), riusando i tassi
+  della 5.43. Classifica a danno DSB stimato vs classifica a dose
+  fisica: sovrapposizione 9/10, coerente con l'RBE (5.31/5.34/5.35) --
+  la dose fisica usata fin dall'inizio (5.22) per selezionare i
+  neuroni da spegnere si conferma un criterio robusto anche al livello
+  di realismo biologico piu' profondo raggiunto in questo progetto.
 
 ## Build ed esecuzione
 

@@ -42,6 +42,16 @@ class EventAction : public G4UserEventAction
     // se un accoppiamento con Geant4-DNA (valido fino a ~1 MeV) ha
     // senso fisico, sezione 5.39.
     std::vector<G4double> fSecondaryElectronEnergies{};
+    // Conteggio di elettroni secondari PER NEURONE (sezione 5.44 --
+    // finora la 5.39 aggregava lo spettro su tutto l'anello, senza
+    // sapere da quale neurone venisse ciascun elettrone).
+    std::array<G4long, N_NEURONS> fSecondaryElectronCount{};
+    // Danno DSB atteso PER NEURONE, stimato assegnando a ogni elettrone
+    // secondario il tasso DSB/primario del punto rappresentativo piu'
+    // vicino tra i 6 della sezione 5.43 (approssimazione dichiarata:
+    // non e' una nuova simulazione di danno per neurone, riusa i tassi
+    // gia' validati).
+    std::array<G4double, N_NEURONS> fEstimatedDSB{};
 };
 
 #endif

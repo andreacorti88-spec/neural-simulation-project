@@ -15,17 +15,23 @@ void RunAction::BeginOfRunAction(const G4Run*)
   fSumPrimaryHits.fill(0);
   fNEvents = 0;
   fSecondaryElectronSpectrum.clear();
+  fSumSecondaryElectronCount.fill(0);
+  fSumEstimatedDSB.fill(0.);
 }
 
 void RunAction::RecordEvent(const std::array<G4double, N_NEURONS>& edep,
                              const std::array<G4double, N_NEURONS>& edepSqOverDx,
                              const std::array<G4bool, N_NEURONS>& primaryHit,
-                             const std::vector<G4double>& secondaryElectronEnergies)
+                             const std::vector<G4double>& secondaryElectronEnergies,
+                             const std::array<G4long, N_NEURONS>& secondaryElectronCount,
+                             const std::array<G4double, N_NEURONS>& estimatedDSB)
 {
   for (G4int i = 0; i < N_NEURONS; ++i) {
     fSumEdep[i] += edep[i];
     fSumEdepSqOverDx[i] += edepSqOverDx[i];
     if (primaryHit[i]) fSumPrimaryHits[i] += 1;
+    fSumSecondaryElectronCount[i] += secondaryElectronCount[i];
+    fSumEstimatedDSB[i] += estimatedDSB[i];
   }
   fNEvents += 1;
   for (G4double e : secondaryElectronEnergies) {
@@ -40,7 +46,8 @@ void RunAction::EndOfRunAction(const G4Run* run)
   std::ofstream out(fname.str());
   out << "# n_events=" << fNEvents << "\n";
   out << "neuron_index,xi,sum_edep_MeV,mean_edep_keV_per_event,"
-         "primary_hit_count,primary_hit_fraction,dose_averaged_LET_keV_per_um\n";
+         "primary_hit_count,primary_hit_fraction,dose_averaged_LET_keV_per_um,"
+         "secondary_electron_count,estimated_DSB\n";
   for (G4int i = 0; i < N_NEURONS; ++i) {
     G4double xi = static_cast<G4double>(i) / N_NEURONS;
     G4double sumEdepMeV = fSumEdep[i] / CLHEP::MeV;
@@ -53,8 +60,11 @@ void RunAction::EndOfRunAction(const G4Run* run)
     // pesa ogni step per il proprio deposito di energia).
     G4double doseAvgLET = (fSumEdep[i] > 0.)
         ? (fSumEdepSqOverDx[i] / fSumEdep[i]) / (CLHEP::keV / CLHEP::um) : 0.;
+    // Sezione 5.44: danno DSB atteso per neurone (stima, non una nuova
+    // simulazione -- riusa i tassi validati della 5.43 per bin di energia).
     out << i << "," << xi << "," << sumEdepMeV << "," << meanEdepKeV << ","
-        << fSumPrimaryHits[i] << "," << hitFraction << "," << doseAvgLET << "\n";
+        << fSumPrimaryHits[i] << "," << hitFraction << "," << doseAvgLET << ","
+        << fSumSecondaryElectronCount[i] << "," << fSumEstimatedDSB[i] << "\n";
   }
   out.close();
 
