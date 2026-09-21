@@ -21,9 +21,12 @@ l'informazione di posizione dopo due salti (in C) e persino dopo il giro
 completo (di nuovo in A, tramite C->A)?
 """
 
+import sys
 from brian2 import *
 
+SEED = int(sys.argv[1])
 start_scope()
+seed(SEED)
 
 N_E = 100
 N_I = 25
@@ -101,9 +104,9 @@ def costruisci_anello(E, I_pop, seed):
     return syn_ee, syn_ei, syn_ie, syn_ii
 
 
-syn_A = costruisci_anello(A_E, A_I, seed=0)
-syn_B = costruisci_anello(B_E, B_I, seed=1)
-syn_C = costruisci_anello(C_E, C_I, seed=2)
+syn_A = costruisci_anello(A_E, A_I, seed=1000+SEED)
+syn_B = costruisci_anello(B_E, B_I, seed=2000+SEED)
+syn_C = costruisci_anello(C_E, C_I, seed=3000+SEED)
 
 tau_stdp = 20*ms
 A_ltp = 0.15*mV
@@ -149,9 +152,9 @@ def collega(SRC_E, DST_E, seed_conn, w_iniziale):
 # A -- lo stesso identico problema "uovo-gallina" gia' risolto in 5.7 per
 # A->B (tentativo 1: w_init=0.3mV, B non si accendeva mai), qui riapplicato
 # ai salti successivi della staffetta
-syn_ab = collega(A_E, B_E, seed_conn=10, w_iniziale=w_init)
-syn_bc = collega(B_E, C_E, seed_conn=11, w_iniziale=3.0*mV)
-syn_ca = collega(C_E, A_E, seed_conn=12, w_iniziale=3.0*mV)
+syn_ab = collega(A_E, B_E, seed_conn=4000+SEED, w_iniziale=w_init)
+syn_bc = collega(B_E, C_E, seed_conn=5000+SEED, w_iniziale=3.0*mV)
+syn_ca = collega(C_E, A_E, seed_conn=6000+SEED, w_iniziale=3.0*mV)
 print(f"Staffetta A->B->C->A creata: A->B {len(syn_ab)} sinapsi, "
       f"B->C {len(syn_bc)} sinapsi, C->A {len(syn_ca)} sinapsi")
 
@@ -222,8 +225,8 @@ title('Dettaglio: ultime ripetizioni (fine training)')
 legend(loc='upper right', fontsize=8, markerscale=4)
 
 tight_layout()
-savefig('dialogo_spiking_relay_3anelli.png', dpi=150)
-print("\nGrafico salvato in dialogo_spiking_relay_3anelli.png")
+savefig('dialogo_spiking_relay_chiusura_turni_mc.png', dpi=150)
+print("\nGrafico salvato in dialogo_spiking_relay_chiusura_turni_mc.png")
 
 ciclo_ms = (T_STIM+T_PAUSA)/ms
 
@@ -278,12 +281,17 @@ print("DETTAGLIO PER CICLO SONDA: attivita' di A senza alcuno stimolo esterno")
 print("="*70)
 base_A = 0
 mask_A = (spikes.i >= base_A) & (spikes.i < base_A+N_E)
+sonde_con_spike = 0
+sonde_conteggi = []
 for rep in range(N_RIPETIZIONI_NORMALI, N_RIPETIZIONI):
     t0 = rep * ciclo_ms
     fin = t0 + ciclo_ms
     m = mask_A & (spikes.t/ms >= t0) & (spikes.t/ms < fin)
     idx = spikes.i[m] - base_A
     n_tot = m.sum()
+    sonde_conteggi.append(int(n_tot))
+    if n_tot > 0:
+        sonde_con_spike += 1
     centro = None
     if n_tot > 0:
         centro = float(np.angle(np.mean(np.exp(2j*np.pi*np.array(xi[idx])))) / (2*np.pi) % 1.0)
@@ -292,6 +300,9 @@ for rep in range(N_RIPETIZIONI_NORMALI, N_RIPETIZIONI):
     print(f"  sonda {indice_sonda+1:2d}/{N_SONDE_SILENZIOSE}: {n_tot} spike in A, "
           f"centro={('N/A' if centro is None else f'{centro:.3f}')}, "
           f"errore={('N/A' if err is None else f'{err:.3f}')}")
+
+print(f"\nMC_RIGA seed={SEED} sonde_con_spike={sonde_con_spike}/{N_SONDE_SILENZIOSE} "
+      f"conteggi={sonde_conteggi}")
 
 # controllo di stabilita' (per costruzione non dovrebbe mai esplodere,
 # ma verifichiamo comunque per coerenza con il resto del progetto)

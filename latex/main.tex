@@ -1645,6 +1645,21 @@ Con questa sezione, il ponte tra il filone di fisica (5.21-5.43) e quello di neu
 
 \lstinputlisting[language=C++]{geant4_src/EventAction.cc}
 \lstinputlisting[language=C++]{geant4_src/RunAction.cc}
+\subsection{5.45 Il loop C-\textgreater A non si chiude: la staffetta a tre anelli non si autosostiene}\label{il-loop-c-a-non-si-chiude-la-staffetta-a-tre-anelli-non-si-autosostiene}
+
+Torna al filone di neuroscienza pura, chiudendo una domanda aperta dalla sezione 5.20: la staffetta direzionale A-\textgreater B-\textgreater C-\textgreater A (tre popolazioni, solo collegamenti unidirezionali con STDP, nessuna delle instabilita\textquotesingle{} di retroazione mutua incontrate con la vera bidirezionalita\textquotesingle{} puo\textquotesingle{} presentarsi per costruzione) propaga correttamente l\textquotesingle informazione di posizione da A fino a C dopo due salti -\/- ma il collegamento di chiusura C-\textgreater A trasmette in modo CAUSALE, capace di sostenere un\textquotesingle eco del messaggio anche senza piu\textquotesingle{} stimolo esterno su A?
+
+Protocollo: 80 ripetizioni normali di allenamento (stimolo esterno solo su A, come nella 5.20), seguite da 10 cicli SONDA consecutivi senza alcuno stimolo esterno su nessun anello. Se C-\textgreater A e\textquotesingle{} causalmente efficace, A dovrebbe mostrare attivita\textquotesingle{} tardiva stabile in OGNUNO dei 10 cicli sonda (un\textquotesingle eco autosostenuta dal loop); se invece l\textquotesingle apparente chiusura fosse un artefatto o pura persistenza residua di A stessa, l\textquotesingle attivita\textquotesingle{} dovrebbe esaurirsi entro i primi 1-2 cicli e non ricomparire.
+
+Risultato, verificato su 5 run indipendenti (1 run singolo + 4 seed Monte Carlo): mai piu\textquotesingle{} di 3 sonde su 10 mostrano una qualunque attivita\textquotesingle{} in A, e quando ne mostrano e\textquotesingle{} sempre 1-2 spike isolati -\/- rumore di fondo della rete (400 Hz di stimolo Poisson di base su ogni neurone), non un segnale riconoscibile. Nessuno dei 5 run mostra la firma attesa di un loop causale (attivita\textquotesingle{} stabile e localizzata in OGNI ciclo sonda).
+
+seed singolo (run originale): 1/10 sonde con spike (solo la prima, 2 spike); seed 1: 3/10 (1 spike ciascuna); seed 2: 0/10; seed 3: 2/10 (1 spike ciascuna); seed 4: 0/10.
+
+Conclusione: il collegamento C-\textgreater A non chiude un loop causale autosostenuto in questa architettura -\/- coerente con, ed estensione di, la conclusione gia\textquotesingle{} raggiunta nella sezione 5.9 per il caso piu\textquotesingle{} semplice a due anelli (il canale di ritorno B-\textgreater A non trasmette causalmente in questo sistema). Anche con un terzo anello intermedio e un percorso di ritorno piu\textquotesingle{} lungo, lo stesso limite strutturale si ripresenta: la propagazione unidirezionale in avanti (A-\textgreater B-\textgreater C) funziona in modo affidabile, ma nessun percorso di ritorno testato finora in questo progetto -\/- ne\textquotesingle{} diretto (B-\textgreater A, 5.9) ne\textquotesingle{} attraverso un anello intermedio (C-\textgreater A, qui) -\/- si dimostra causalmente efficace senza la stabilizzazione esplicita (interruttore di trasmissione, normalizzazione omeostatica) sviluppata per la vera bidirezionalita\textquotesingle{} nelle sezioni 5.13-5.17.
+
+\textit{\textbf{Codice sorgente: dialogo\_spiking\_relay\_chiusura\_turni\_mc.py}}
+
+\lstinputlisting[language=Python]{scripts/dialogo_spiking_relay_chiusura_turni_mc.py}
 \section{6. Realismo biofisico e densita\textquotesingle{} sinaptica: confronto con l\textquotesingle Allen Institute}\label{realismo-biofisico-e-densita-sinaptica-confronto-con-lallen-institute}
 
 L\textquotesingle ultima fase del progetto nasce da un confronto esplicito con lo stato dell\textquotesingle arte reale della ricerca (sezione 4.5): il presente progetto aveva superato l\textquotesingle Allen Institute nel numero puro di neuroni simulati (40 milioni contro \textasciitilde10 milioni), ma con una densita\textquotesingle{} sinaptica per neurone drasticamente inferiore (\textasciitilde31 contro \textasciitilde2.600) e un dettaglio biofisico per neurone molto piu\textquotesingle{} semplice. Questa sezione descrive il tentativo di colmare entrambi i divari contemporaneamente.
@@ -2045,6 +2060,7 @@ geant4dna\_icsd/nanoICSD.cc (seed esplicito, verifica 4 seed) & 5.41 & Verifica 
 geant4dna\_ssbdsb (moleculardna, energie reali dalla 5.39) & 5.42 & Danno DNA reale (SSB/DSB) da elettroni secondari CNAO: frazione DSB piu\textquotesingle{} alta a bassa energia (LET piu\textquotesingle{} alto), verificato su 3 seed (SB CV 1.8\%, DSB CV 12.4\%) -\/- chiude il collegamento nanodosimetrico fino al livello del DNA \\
 geant4dna\_ssbdsb/results/spectrum\_weighted (6 punti pesati) & 5.43 & Danno DNA pesato sull\textquotesingle intero spettro reale (6 punti, non 2): frazione DSB monotona con l\textquotesingle energia (15.7\% a 5.4\%), media pesata finale 9.5\% -\/- chiude l\textquotesingle ultimo limite dichiarato nella 5.42 \\
 geant4\_cnao\_ring (tracking DSB per-neurone) & 5.44 & Ponte fisica-neuroscienza chiuso fino al DNA: classifica a danno DSB stimato per-neurone sovrapposta 9/10 con quella a dose fisica -\/- la dose fisica resta un criterio robusto anche al livello di realismo biologico piu\textquotesingle{} profondo raggiunto \\
+dialogo\_spiking\_relay\_chiusura\_turni\_mc.py & 5.45 & Il loop C-\textgreater A non si chiude causalmente: verificato su 5 run (1+4 MC), mai piu\textquotesingle{} di 3/10 sonde con attivita\textquotesingle{} residua, sempre a livello di rumore -\/- estende la conclusione della 5.9 (B-\textgreater A non causale) al caso a tre anelli \\
 \end{longtable}
 }
 
