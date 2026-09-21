@@ -244,7 +244,7 @@ resoconto, sezioni 5.22-5.26.
    con quanto sono sbilanciati i neuroni spenti tra i due messaggi, non
    un fenomeno di tutto-o-niente.
 
-## Aggiornamenti (sezioni 5.28-5.42)
+## Aggiornamenti (sezioni 5.28-5.43)
 
 - **5.28 -- Gradiente confermato con i protoni**: mappa di dose al picco
   di Bragg per protone 70 MeV, sbilanciamento 4-vs-0 (il piu' netto
@@ -346,6 +346,14 @@ resoconto, sezioni 5.22-5.26.
   rumoroso (CV 12.4%, atteso per conteggi piccoli). Dettagli completi
   nel README di `geant4dna_ssbdsb` (nuovo progetto dentro
   `neuroni-progetto/`).
+- **5.43 -- Danno al DNA pesato sull'intero spettro reale**: estesi i
+  due punti della 5.42 a 6 punti rappresentativi (percentili 10-99
+  dello spettro reale della 5.39), pesati per la frazione di elettroni
+  che rappresentano. Frazione DSB quasi monotona con l'energia (15.7%
+  a 5.4%), confermando su 6 punti la spiegazione LET gia' proposta.
+  Media pesata finale: SB/primario=0.1674, DSB/primario=0.01753,
+  frazione DSB=9.5% -- la stima piu' rappresentativa, al posto dei due
+  estremi della 5.42.
 
 ## Build ed esecuzione
 

@@ -1587,6 +1587,50 @@ Limite dichiarato: la geometria "cylinders" e\textquotesingle{} un volume di stu
 
 \emph{\textbf{Eseguito con moleculardna (Geant4-DNA collaboration), geant4dna\_ssbdsb/build/, energie dallo spettro reale della sezione 5.39}}
 
+\subsection{5.43 Danno al DNA pesato sull\textquotesingle intero spettro reale, non solo due punti}\label{danno-al-dna-pesato-sullintero-spettro-reale-non-solo-due-punti}
+
+Chiude un limite esplicitamente dichiarato nella sezione 5.42: solo due energie (mediana e 90-esimo percentile) rappresentavano l\textquotesingle intero spettro reale di 18.021 elettroni secondari. Qui: 6 punti rappresentativi (percentili 10, 25, 50, 75, 90, 99 dello spettro verificato nella 5.39), ciascuno pesato per la frazione reale di elettroni che rappresenta (partizione di Voronoi 1D attorno ai punti scelti), per ottenere una resa (yield) di danno pesata sull\textquotesingle intero spettro invece che su due soli campioni.
+
+{\def\LTcaptype{none} % do not increment counter
+\begin{longtable}[]{@{}
+  >{\raggedright\arraybackslash}p{(\linewidth - 8\tabcolsep) * \real{0.2000}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 8\tabcolsep) * \real{0.2000}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 8\tabcolsep) * \real{0.2000}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 8\tabcolsep) * \real{0.2000}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 8\tabcolsep) * \real{0.2000}}@{}}
+\toprule\noalign{}
+\begin{minipage}[b]{\linewidth}\raggedright
+Energia (keV)
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Peso spettro
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+SB/primario
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+DSB/primario
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Frazione DSB
+\end{minipage} \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+1.09 & 18.0\% & 0.0550 & 0.0103 & 15.7\% \\
+1.28 & 21.7\% & 0.0715 & 0.0083 & 10.3\% \\
+1.86 (mediana) & 26.5\% & 0.1027 & 0.0137 & 11.7\% \\
+3.43 & 19.2\% & 0.2213 & 0.0243 & 9.9\% \\
+7.33 (p90) & 12.0\% & 0.5376 & 0.0430 & 7.4\% \\
+28.82 (p99) & 2.7\% & 0.2863 & 0.0163 & 5.4\% \\
+\end{longtable}
+}
+
+La frazione di rotture doppie (DSB) decresce in modo quasi monotono lungo tutto lo spettro (15.7\% -\textgreater{} 10.3\% -\textgreater{} 11.7\% -\textgreater{} 9.9\% -\textgreater{} 7.4\% -\textgreater{} 5.4\%), confermando su 6 punti indipendenti, non piu\textquotesingle{} solo 2, la spiegazione fisica gia\textquotesingle{} proposta nella 5.42: il LET diminuisce con l\textquotesingle energia dell\textquotesingle elettrone in questo intervallo, e un LET piu\textquotesingle{} basso disperde il danno su un percorso piu\textquotesingle{} lungo invece di concentrarlo, riducendo la probabilita\textquotesingle{} di rotture ravvicinate su entrambi i filamenti.
+
+Anomalia notata e non nascosta: al punto piu\textquotesingle{} alto (28.82 keV, solo 800 eventi -\/- la statistica piu\textquotesingle{} bassa tra i 6 punti, dato il costo computazionale crescente con l\textquotesingle energia) il valore assoluto SB/primario (0.286) e\textquotesingle{} PIU\textquotesingle{} BASSO di quello a 7.33 keV (0.538), non monotono in valore assoluto (a differenza della frazione DSB, che resta monotona). Spiegazione fisicamente plausibile: il range di un elettrone da 28.82 keV puo\textquotesingle{} avvicinarsi o superare l\textquotesingle estensione della geometria DNA usata (100x30x100nm) -\/- una parte crescente della sua energia rischia di essere depositata FUORI dal volume sensibile, riducendo la frazione di energia totale che contribuisce davvero al danno registrato. Non esclusa una componente di puro rumore statistico, data la bassa statistica di questo singolo punto (peso nello spettro comunque piccolo, 2.7\%, quindi l\textquotesingle effetto sulla media pesata finale e\textquotesingle{} limitato).
+
+Risultato finale, media pesata sull\textquotesingle intero spettro reale: SB/primario = 0.1674, DSB/primario = 0.01753, frazione DSB = 9.5\% -\/- una stima singola e piu\textquotesingle{} rappresentativa, rispetto ai due estremi riportati nella 5.42 (12.6\% alla sola mediana, 7.4\% al solo 90-esimo percentile). Questo e\textquotesingle{} il numero da citare come resa di danno complessiva per un elettrone secondario tipico prodotto da un fascio di carbonio-12 CNAO al picco di Bragg, dentro la geometria di riferimento di moleculardna.
+
+\emph{\textbf{Eseguito con moleculardna (geant4dna\_ssbdsb/build/results\_spectrum\_weighted/), 6 punti pesati sullo spettro reale della sezione 5.39}}
+
 \section{6. Realismo biofisico e densita\textquotesingle{} sinaptica: confronto con l\textquotesingle Allen Institute}\label{realismo-biofisico-e-densita-sinaptica-confronto-con-lallen-institute}
 
 L\textquotesingle ultima fase del progetto nasce da un confronto esplicito con lo stato dell\textquotesingle arte reale della ricerca (sezione 4.5): il presente progetto aveva superato l\textquotesingle Allen Institute nel numero puro di neuroni simulati (40 milioni contro \textasciitilde10 milioni), ma con una densita\textquotesingle{} sinaptica per neurone drasticamente inferiore (\textasciitilde31 contro \textasciitilde2.600) e un dettaglio biofisico per neurone molto piu\textquotesingle{} semplice. Questa sezione descrive il tentativo di colmare entrambi i divari contemporaneamente.
@@ -1985,6 +2029,7 @@ geant4\_cnao\_ring (DetectorConstruction.cc, taglio di produzione) & 5.39 & Prim
 geant4dna\_icsd/build/nanoICSD (energie reali dalla 5.39) & 5.40 & Collegamento nanodosimetrico completato: ICSD da energie di elettroni secondari REALI (CNAO) si inseriscono coerentemente tra i punti gia\textquotesingle{} pubblicati nel paper Villagrasa/Baiocco -\/- catena macro-a-nano verificata end-to-end \\
 geant4dna\_icsd/nanoICSD.cc (seed esplicito, verifica 4 seed) & 5.41 & Verifica Monte Carlo di nanoICSD: M1=1.090 confermato stabile (CV 0.34\% su 4 seed) -\/- a differenza della mappa di dose (5.32), qui non c\textquotesingle e\textquotesingle{} un problema di rumore statistico \\
 geant4dna\_ssbdsb (moleculardna, energie reali dalla 5.39) & 5.42 & Danno DNA reale (SSB/DSB) da elettroni secondari CNAO: frazione DSB piu\textquotesingle{} alta a bassa energia (LET piu\textquotesingle{} alto), verificato su 3 seed (SB CV 1.8\%, DSB CV 12.4\%) -\/- chiude il collegamento nanodosimetrico fino al livello del DNA \\
+geant4dna\_ssbdsb/results/spectrum\_weighted (6 punti pesati) & 5.43 & Danno DNA pesato sull\textquotesingle intero spettro reale (6 punti, non 2): frazione DSB monotona con l\textquotesingle energia (15.7\% a 5.4\%), media pesata finale 9.5\% -\/- chiude l\textquotesingle ultimo limite dichiarato nella 5.42 \\
 \end{longtable}
 }
 

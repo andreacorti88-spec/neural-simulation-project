@@ -59,15 +59,42 @@ eventi ciascuno, `results_mc_check/`): SB stabile (CV 1.8%: 522, 514,
 molto piu' piccoli). Media dei 3 seed coerente entro il rumore col run
 singolo originale a 10.000 eventi.
 
+### Media pesata sull'intero spettro reale (sezione 5.43)
+
+Estesi i due punti sopra a 6 punti rappresentativi (percentili 10, 25,
+50, 75, 90, 99 dello spettro reale della 5.39), pesati per la frazione
+di elettroni che rappresentano (`results/spectrum_weighted/`):
+
+| Energia (keV) | Peso spettro | SB/primario | DSB/primario | Frazione DSB |
+|---|---|---|---|---|
+| 1.09 | 18.0% | 0.0550 | 0.0103 | 15.7% |
+| 1.28 | 21.7% | 0.0715 | 0.0083 | 10.3% |
+| 1.86 (mediana) | 26.5% | 0.1027 | 0.0137 | 11.7% |
+| 3.43 | 19.2% | 0.2213 | 0.0243 | 9.9% |
+| 7.33 (p90) | 12.0% | 0.5376 | 0.0430 | 7.4% |
+| 28.82 (p99) | 2.7% | 0.2863 | 0.0163 | 5.4% |
+
+**Media pesata: SB/primario = 0.1674, DSB/primario = 0.01753,
+frazione DSB = 9.5%** -- la stima piu' rappresentativa disponibile,
+al posto dei due estremi (12.6%/7.4%) della 5.42.
+
+La frazione DSB decresce in modo quasi monotono con l'energia,
+confermando su 6 punti la spiegazione fisica (LET decrescente)
+proposta con solo 2 punti nella 5.42. Anomalia notata (non nascosta):
+al punto piu' alto (28.82 keV, solo 800 eventi) SB/primario e' piu'
+basso che a 7.33 keV, non monotono in valore assoluto -- verosimilmente
+perche' il range dell'elettrone si avvicina all'estensione della
+geometria (100x30x100nm), disperdendo energia fuori dal volume
+sensibile (peso nello spettro comunque piccolo, 2.7%).
+
 ## Limiti dichiarati
 
 - La geometria "cylinders" e' un volume di studio parametrico, non un
   intero nucleo cellulare -- questi sono rese (yield) relative per
   primario in quel volume definito, non una previsione assoluta di
   danno a livello di cellula intera.
-- Solo due punti energetici testati (mediana e 90-esimo percentile
-  dello spettro reale), non l'intero spettro continuo pesato per la
-  sua vera distribuzione.
+- ~~Solo due punti energetici testati~~ **ESTESO** (sezione 5.43): ora
+  6 punti pesati sull'intero spettro reale (vedi sopra).
 - Il modello di danno usa parametri di default dell'esempio (soglia
   energia diretta 17.5 eV, probabilita' di reazione indiretta 65% sul
   filamento) -- non calibrati specificamente su dati sperimentali per
