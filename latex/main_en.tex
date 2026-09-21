@@ -626,6 +626,33 @@ Finding the right parameters was not immediate, and it is instructive to report 
 \textit{\textbf{Source code: ring\_\allowbreak{}attractor\_\allowbreak{}rate.py (final verified version)}}
 
 \lstinputlisting[language=Python]{scripts/ring_attractor_rate.py}
+\subsubsection{4.4.3 Formal diagnosis of the position bias: not a discretization artifact}\label{formal-diagnosis-of-the-position-bias-not-a-discretization-artifact}
+
+Section 4.4.2 had observed a systematic bias of about 0.045 units between the stimulus position and the resulting bump position, hypothesizing -\/- without verifying it -\/- that it was "most likely a discretization artifact of the N=200-point spatial grid." Section 9 explicitly listed it as an open question: "determine whether it is a purely numerical artifact or reflects a real (if unwanted) property of the discretized model." This section answers with three independent, falsifiable tests.
+
+A reproducibility bug discovered while preparing this diagnosis, fixed before proceeding: rerunning ring\_\allowbreak{}attractor\_\allowbreak{}rate.py to compare its output against what Section 4.4.2 documents, the file at the top level of the repository turned out to have been overwritten with a different implementation than the one actually validated -\/- a "Mexican hat" kernel (two opposing Gaussians, local excitation minus local inhibition) with a NON-saturating activation function, instead of the single excitatory kernel plus GLOBAL inhibition (proportional to the whole network\textquotesingle s mean) with a rectified activation saturating at r\_\allowbreak{}max=5.0 that was actually used to produce the four results verified in 4.4.2. With the wrong version, the bump always died out by the end of the simulation -\/- never the documented behavior. Comparing against the historical code embedded in the report itself (Section 4.4.2\textquotesingle s code table, frozen at the time of the original validation), it was possible to reconstruct and restore the version that actually works. Rerun, the corrected version NOW reproduces exactly the -0.045 bias at all 5 positions from 4.4.2 (saturation peak at 5.000 in each) -\/- confirming that the restored file is really the one behind the documented results, not just a plausible guess.
+
+PART 1 -\/- scaling with grid resolution N. If the bias were an artifact of the Riemann sum approximating the continuous convolution integral (rec\_\allowbreak{}input = J\_\allowbreak{}exc @ r / N), it should shrink systematically as N grows, toward 1/N. The stimulus is deliberately placed at x=0.2537, a coordinate that NEVER exactly coincides with a grid node for any of the N values tested (50, 100, 200, 400, 800, 1600), so as not to confound the real scaling with a trivial snapping of the peak to the nearest grid node when N is small.
+
+Result: the bias stays PRACTICALLY CONSTANT across the whole range (-0.034 at N=50, up to -0.046 at N=1600) -\/- a variation factor of just 0.74x between the two extremes, against the \textasciitilde32x REDUCTION factor a genuine 1/N quantization artifact should have produced going from N=50 to N=1600. If anything, the bias grows slightly with N instead of vanishing -\/- the exact opposite of the original hypothesis\textquotesingle s prediction.
+
+PART 2 -\/- dependence on sub-grid position, at fixed N=200. If the bias depended on the stimulus position RELATIVE to the nearest grid node (the direct signature of a quantization-readout artifact), sweeping the stimulus continuously across a few grid cells should show a periodic structure of amplitude comparable to the bias itself.
+
+Result: a periodic modulation with period EXACTLY 1/N does appear (the classic signature of quantizing the peak readout via argmax on a discrete grid) -\/- but at an amplitude much smaller than the main bias (a sawtooth between -0.0415 and -0.046, just 0.0045 peak-to-peak, one tenth of the \textasciitilde0.044 bias that Section 4.4.2\textquotesingle s hypothesis was trying to explain). A genuine discretization artifact does exist, then, but it is a secondary, negligible effect layered on top of a much larger bias that is substantially independent of sub-grid position.
+
+PART 3 -\/- dependence on the time-integration step dt, at fixed N=200. If the bias were a truncation artifact of explicit Euler integration (a single Euler step\textquotesingle s local error scales linearly with dt), it should shrink proportionally as dt decreases.
+
+Result: the bias is IDENTICAL to five decimal places (-0.04370) for every one of the four dt values tested (0.2, 0.1, 0.05, 0.025 ms, an 8x factor) -\/- no trace of dt-dependence, against the \textasciitilde8x reduction factor expected from a genuine truncation artifact linear in dt.
+
+Conclusion: the ring attractor\textquotesingle s position bias is NOT a numerical artifact -\/- neither of spatial discretization (Part 1) nor of time integration (Part 3). It is a REAL property, however unwanted, of the model\textquotesingle s continuous dynamics. The most plausible hypothesis, not further verified in this work: an asymmetry in the TRANSIENT phase of bump formation, where the global inhibition term (proportional to the instantaneous mean of the ENTIRE network, which changes rapidly while the bump is forming) may not exactly preserve translational symmetry during the initial growth, before the system settles into its final steady-state shape -\/- a property of the dynamical trajectory, not of the equilibrium configuration itself. A periodic modulation of much smaller amplitude (one tenth of the main bias), with period exactly 1/N, is present and really is a quantization artifact of the peak readout -\/- but it is a secondary effect, not the explanation of the main phenomenon hypothesized in 4.4.2.
+
+\includegraphics[width=6.3in,height=1.7071in]{media/media/image53.png}
+
+\emph{Fig. 52 --- Diagnosis of the position bias: (left) bias vs. grid resolution N, practically constant against the 1/N scaling expected for an artifact; (center) bias vs. sub-grid position at N=200, showing a secondary periodic modulation of much smaller amplitude than the main bias; (right) bias vs. integration step dt, identical across an 8x factor.}
+
+\textit{\textbf{Source code: diagnosi\_\allowbreak{}bias\_\allowbreak{}posizione\_\allowbreak{}scaling.py}}
+
+\lstinputlisting[language=Python]{scripts/diagnosi_bias_posizione_scaling.py}
 \subsection{4.5 Where the scientists have gotten to: the real state of the art (September 2026)}\label{where-the-scientists-have-gotten-to-the-real-state-of-the-art-september-2026}
 
 To honestly contextualize this project\textquotesingle s results against professional research in the same field, sources current as of the writing of this document (September 2026) were consulted:
@@ -2137,7 +2164,7 @@ Even the project\textquotesingle s most advanced result (the contextual decision
 \item
   Thermal-throttling slowdown (Section 3.4) introduces a not-fully-controlled hardware variable in the longer experiments, making time estimates for future experiments of comparable scale inherently uncertain
 \item
-  The systematic position bias (\textasciitilde0.045 units) repeatedly observed in the ring-attractor experiments (Sections 4.4.2, 5.1, 5.2) has not been fully diagnosed at its root -\/- probably a discretization artifact of the N=200-point grid, but without a formal check ruling it out as a real effect of the model
+  The systematic position bias (\textasciitilde0.045 units) repeatedly observed in the ring-attractor experiments (Sections 4.4.2, 5.1, 5.2) has not been fully diagnosed at its root -\/- probably a discretization artifact of the N=200-point grid, but without a formal check ruling it out as a real effect of the model {[}Update: formally diagnosed in Section 4.4.3 -\/- it is not a discretization artifact (neither spatial nor temporal), it is a real property of the model\textquotesingle s dynamics.{]}
 \item
   The contextual policy of Section 5.4 was verified on only 3 discrete, well-separated contexts on the ring -\/- it was not tested whether the mechanism generalizes to a larger number of contexts, to contexts spatially closer together (which could interfere with each other), or to the ability to correctly interpolate for an intermediate context never presented during training
 \item
@@ -2168,7 +2195,7 @@ The nanodosimetric link (Sections 5.39-5.41) stops at the level of ICSD (Ionizat
 \item
   Test access to a university computing cluster (for example through CNAO or the University of Pavia\textquotesingle s Physics Department) to overcome the RAM limit of a personal laptop, empirically verified in Section 3.3 at around 40-50 million neurons with simple random connectivity
 \item
-  Formally investigate the origin of the systematic position bias observed in the ring attractor (Sections 4.4.2, 5.1, 5.2), to determine whether it is a purely numerical artifact or reflects a real (if unwanted) property of the discretized model
+  Formally investigate the origin of the systematic position bias observed in the ring attractor (Sections 4.4.2, 5.1, 5.2), to determine whether it is a purely numerical artifact or reflects a real (if unwanted) property of the discretized model {[}Update: done in Section 4.4.3. Three falsifiable tests (scaling with N, sub-grid dependence, scaling with dt) rule out a numerical artifact: it is a real property of the model, however unwanted.{]}
 \end{itemize}
 
 The future developments above concern the pure-neuroscience thread. For the physics thread (Geant4/CNAO/Chiba), the open items remain those of the twin project geant4dna\_\allowbreak{}icsd (see its README): implementing the "common" cross-section dataset defined in the Villagrasa/Baiocco paper (requires extracting the numerical values from the supplementary material and writing a dedicated G4VEmModel subclass -\/- substantial work, not a weekend extension, as the paper itself notes) and, above all, extending the already-verified physical chain (macroscopic dose -\textgreater{} secondary-electron spectrum -\textgreater{} nanodosimetric ICSD) all the way to DNA damage (SSB/DSB) with a geometric cell-nucleus model -\/- the natural next step to make the link clinically interpretable, not just physically coherent. {[}Update: SSB/DSB damage was completed in Section 5.42, using the moleculardna example instead of dnadamage1/molecularDNA (blocked by a missing external dependency) -\/- only the paper\textquotesingle s common cross-section dataset remains open.{]}
@@ -2246,6 +2273,7 @@ rete\_\allowbreak{}40M\_\allowbreak{}finale.py & 3.6 & Final experiment at 40 mi
 rete\_\allowbreak{}smallworld.py & 4.1 & Small-world connectivity on a ring \\
 brain3d\_\allowbreak{}visualization.html, brain1M\_\allowbreak{}visualization.html & 4.2 & Interactive 3D visualizations \\
 ring\_\allowbreak{}attractor\_\allowbreak{}rate.py & 4.4 & Ring attractor, final verified result \\
+diagnosi\_\allowbreak{}bias\_\allowbreak{}posizione\_\allowbreak{}scaling.py & 4.4.3 & Diagnosis of the position bias (N, sub-grid, dt): not a numerical artifact, it is a real property of the model; also discovered and fixed a reproducibility bug in ring\_\allowbreak{}attractor\_\allowbreak{}rate.py \\
 chained\_\allowbreak{}attractors.py & 5.1 & Chain of two linked attractors \\
 competing\_\allowbreak{}targets.py & 5.2 & Competition between alternatives \\
 rl\_\allowbreak{}bandit.py & 5.3 & Reinforcement learning (bandit) \\
