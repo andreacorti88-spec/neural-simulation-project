@@ -25,7 +25,8 @@ class RunAction : public G4UserRunAction
                       const std::array<G4bool, N_NEURONS>& primaryHit,
                       const std::vector<G4double>& secondaryElectronEnergies,
                       const std::array<G4long, N_NEURONS>& secondaryElectronCount,
-                      const std::array<G4double, N_NEURONS>& estimatedDSB);
+                      const std::array<G4double, N_NEURONS>& estimatedDSB,
+                      const std::array<G4double, N_NEURONS>& fragmentEdep);
 
   private:
     std::array<G4double, N_NEURONS> fSumEdep{};
@@ -39,6 +40,8 @@ class RunAction : public G4UserRunAction
     // Sezione 5.44: stesse quantita' ma per neurone, non solo aggregate.
     std::array<G4long, N_NEURONS> fSumSecondaryElectronCount{};
     std::array<G4double, N_NEURONS> fSumEstimatedDSB{};
+    // Sezione 5.46: dose da frammenti nucleari secondari, per neurone.
+    std::array<G4double, N_NEURONS> fSumFragmentEdep{};
 };
 
 #endif

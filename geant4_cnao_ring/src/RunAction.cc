@@ -17,6 +17,7 @@ void RunAction::BeginOfRunAction(const G4Run*)
   fSecondaryElectronSpectrum.clear();
   fSumSecondaryElectronCount.fill(0);
   fSumEstimatedDSB.fill(0.);
+  fSumFragmentEdep.fill(0.);
 }
 
 void RunAction::RecordEvent(const std::array<G4double, N_NEURONS>& edep,
@@ -24,7 +25,8 @@ void RunAction::RecordEvent(const std::array<G4double, N_NEURONS>& edep,
                              const std::array<G4bool, N_NEURONS>& primaryHit,
                              const std::vector<G4double>& secondaryElectronEnergies,
                              const std::array<G4long, N_NEURONS>& secondaryElectronCount,
-                             const std::array<G4double, N_NEURONS>& estimatedDSB)
+                             const std::array<G4double, N_NEURONS>& estimatedDSB,
+                             const std::array<G4double, N_NEURONS>& fragmentEdep)
 {
   for (G4int i = 0; i < N_NEURONS; ++i) {
     fSumEdep[i] += edep[i];
@@ -32,6 +34,7 @@ void RunAction::RecordEvent(const std::array<G4double, N_NEURONS>& edep,
     if (primaryHit[i]) fSumPrimaryHits[i] += 1;
     fSumSecondaryElectronCount[i] += secondaryElectronCount[i];
     fSumEstimatedDSB[i] += estimatedDSB[i];
+    fSumFragmentEdep[i] += fragmentEdep[i];
   }
   fNEvents += 1;
   for (G4double e : secondaryElectronEnergies) {
@@ -47,7 +50,7 @@ void RunAction::EndOfRunAction(const G4Run* run)
   out << "# n_events=" << fNEvents << "\n";
   out << "neuron_index,xi,sum_edep_MeV,mean_edep_keV_per_event,"
          "primary_hit_count,primary_hit_fraction,dose_averaged_LET_keV_per_um,"
-         "secondary_electron_count,estimated_DSB\n";
+         "secondary_electron_count,estimated_DSB,fragment_edep_MeV,fragment_dose_fraction\n";
   for (G4int i = 0; i < N_NEURONS; ++i) {
     G4double xi = static_cast<G4double>(i) / N_NEURONS;
     G4double sumEdepMeV = fSumEdep[i] / CLHEP::MeV;
@@ -62,9 +65,15 @@ void RunAction::EndOfRunAction(const G4Run* run)
         ? (fSumEdepSqOverDx[i] / fSumEdep[i]) / (CLHEP::keV / CLHEP::um) : 0.;
     // Sezione 5.44: danno DSB atteso per neurone (stima, non una nuova
     // simulazione -- riusa i tassi validati della 5.43 per bin di energia).
+    // Sezione 5.46: dose da frammenti nucleari secondari (protoni, alfa,
+    // deutoni, tritoni, ioni piu' pesanti -- esclude primario ed
+    // elettroni), e la sua frazione sulla dose totale nel neurone.
+    G4double fragmentEdepMeV = fSumFragmentEdep[i] / CLHEP::MeV;
+    G4double fragmentFraction = (fSumEdep[i] > 0.) ? fSumFragmentEdep[i] / fSumEdep[i] : 0.;
     out << i << "," << xi << "," << sumEdepMeV << "," << meanEdepKeV << ","
         << fSumPrimaryHits[i] << "," << hitFraction << "," << doseAvgLET << ","
-        << fSumSecondaryElectronCount[i] << "," << fSumEstimatedDSB[i] << "\n";
+        << fSumSecondaryElectronCount[i] << "," << fSumEstimatedDSB[i] << ","
+        << fragmentEdepMeV << "," << fragmentFraction << "\n";
   }
   out.close();
 

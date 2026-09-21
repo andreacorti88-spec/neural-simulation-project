@@ -37,6 +37,7 @@ void EventAction::BeginOfEventAction(const G4Event*)
   fSecondaryElectronEnergies.clear();
   fSecondaryElectronCount.fill(0);
   fEstimatedDSB.fill(0.);
+  fFragmentEdep.fill(0.);
 }
 
 void EventAction::AddEdep(G4int neuronIndex, G4double edep, G4double stepLength)
@@ -60,8 +61,14 @@ void EventAction::AddSecondaryElectron(G4int neuronIndex, G4double kineticEnergy
   fEstimatedDSB[neuronIndex] += DSBRateForEnergy(kineticEnergy / CLHEP::keV);
 }
 
+void EventAction::AddFragmentEdep(G4int neuronIndex, G4double edep)
+{
+  if (neuronIndex < 0 || neuronIndex >= N_NEURONS) return;
+  fFragmentEdep[neuronIndex] += edep;
+}
+
 void EventAction::EndOfEventAction(const G4Event*)
 {
   fRunAction->RecordEvent(fEdep, fEdepSqOverDx, fPrimaryHit, fSecondaryElectronEnergies,
-                           fSecondaryElectronCount, fEstimatedDSB);
+                           fSecondaryElectronCount, fEstimatedDSB, fFragmentEdep);
 }

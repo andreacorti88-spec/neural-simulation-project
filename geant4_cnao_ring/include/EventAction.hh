@@ -27,6 +27,7 @@ class EventAction : public G4UserEventAction
     void AddEdep(G4int neuronIndex, G4double edep, G4double stepLength);
     void MarkPrimaryHit(G4int neuronIndex);
     void AddSecondaryElectron(G4int neuronIndex, G4double kineticEnergy);
+    void AddFragmentEdep(G4int neuronIndex, G4double edep);
 
   private:
     RunAction* fRunAction = nullptr;
@@ -52,6 +53,15 @@ class EventAction : public G4UserEventAction
     // non e' una nuova simulazione di danno per neurone, riusa i tassi
     // gia' validati).
     std::array<G4double, N_NEURONS> fEstimatedDSB{};
+    // Sezione 5.46: energia depositata PER NEURONE da frammenti nucleari
+    // secondari carichi (protoni, alfa, deutoni, tritoni, o ioni piu'
+    // pesanti prodotti da reazioni nucleari inelastiche di un chi'
+    // primario di carbonio-12) -- esclude sia il primario stesso
+    // (parentID==0) sia gli elettroni secondari (gia' tracciati a
+    // parte). Il rapporto fFragmentEdep/fEdep e' la frazione di dose
+    // dovuta a frammenti, la firma fisica della "coda di frammentazione"
+    // oltre il picco di Bragg del carbonio (Chiba/NIRS, letteratura).
+    std::array<G4double, N_NEURONS> fFragmentEdep{};
 };
 
 #endif

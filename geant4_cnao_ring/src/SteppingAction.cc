@@ -70,4 +70,18 @@ void SteppingAction::UserSteppingAction(const G4Step* step)
       && track->GetCurrentStepNumber() == 1) {
     fEventAction->AddSecondaryElectron(neuronIndex, preStep->GetKineticEnergy());
   }
+
+  // Sezione 5.46: dose da FRAMMENTI NUCLEARI secondari carichi --
+  // qualunque traccia non primaria (parentID!=0), non un elettrone,
+  // con carica positiva (protoni, alfa, deutoni, tritoni, o ioni piu'
+  // pesanti prodotti da reazioni inelastiche di un primario di
+  // carbonio-12). La coda di frammentazione oltre il picco di Bragg
+  // del carbonio e' una differenza fisica reale e clinicamente nota
+  // tra terapia a ioni di carbonio e protonterapia (letteratura
+  // Chiba/NIRS-HIMAC): questo accumulatore la rende misurabile.
+  if (edep > 0. && track->GetParentID() != 0
+      && track->GetParticleDefinition()->GetParticleName() != "e-"
+      && track->GetParticleDefinition()->GetPDGCharge() > 0.) {
+    fEventAction->AddFragmentEdep(neuronIndex, edep);
+  }
 }
