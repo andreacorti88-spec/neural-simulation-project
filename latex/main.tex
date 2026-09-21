@@ -836,39 +836,294 @@ Risultato: un messaggio iniziale su A genera uno scambio che NON converge a un p
 \textit{\textbf{Codice sorgente: dialogo\_\allowbreak{}ring\_\allowbreak{}attractor.py}}
 
 \lstinputlisting[language=Python]{scripts/dialogo_ring_attractor.py}
+\subsubsection{5.5.2 Sinapsi apprese con un rinforzo Hebbiano a grana di turno}\label{sinapsi-apprese-con-un-rinforzo-hebbiano-a-grana-di-turno}
+
+Le due mappe di offset diventano qui due matrici di peso N x N vere e proprie (W\_\allowbreak{}AB e W\_\allowbreak{}BA), inizializzate a un bias innato DELIBERATAMENTE troppo debole per accendere da solo un bump nella rete che ascolta (soglia di accensione verificata per bisezione: tra scala 0.0025, 0\% di successo, e 0.003, 100\% di successo -\/- l\textquotesingle attrattore e\textquotesingle{} fortemente bistabile, non esiste quasi via di mezzo). Un rinforzo Hebbiano a fine turno rafforza la coppia (posizione di chi ha appena parlato, posizione di chi ha appena risposto), ogni volta che l\textquotesingle ascoltatore forma davvero un bump. Il problema dell\textquotesingle uovo e della gallina -\/- senza connessione funzionante non si osserva mai una coppia da rinforzare -\/- e\textquotesingle{} risolto con un impulso esplorativo a posizione casuale durante il solo training: rottura di simmetria casuale, lo stesso meccanismo gia\textquotesingle{} verificato in 5.2 (TEST 1b).
+
+Risultato per il canale A-\textgreater B: il tasso di successo di B passa da 0\% a 100\% in circa 30-40 episodi (curva sigmoidale, non un salto istantaneo), e la mappa appresa converge a un offset di 0.195 -\/- diverso dal bias innato di partenza (0.3), un risultato genuinamente emergente e non imposto.
+
+Risultato per il canale di ritorno B-\textgreater A: NON si consolida in questo script. A ha gia\textquotesingle{} un bump persistente fin dal turno 0 (e\textquotesingle{} un attrattore), quindi B deve SPODESTARE un bump gia\textquotesingle{} a piena potenza invece di accenderne uno da zero -\/- un compito molto piu\textquotesingle{} difficile. Il peso W\_\allowbreak{}BA cresce comunque nel tempo, ma per pura coincidenza statistica (la posizione di A resta quasi sempre la stessa per ragioni proprie, indipendenti da B), non per un\textquotesingle influenza causale reale: resta comportamentalmente inefficace. Un risultato negativo verificato col codice, non nascosto -\/- nello stesso spirito metodologico dichiarato nell\textquotesingle introduzione di questo documento.
+
+\includegraphics[width=5.8in,height=4.35in]{media/media/image22.png}
+
+\emph{Fig. 22 --- Consolidamento della sinapsi A-\textgreater B: curva di apprendimento e mappa dei pesi prima/dopo.}
+
 \textit{\textbf{Codice sorgente: dialogo\_\allowbreak{}stdp.py}}
 
 \lstinputlisting[language=Python]{scripts/dialogo_stdp.py}
+\subsubsection{5.5.3 Risoluzione dell\textquotesingle asimmetria: adattamento, turni di silenzio, riscaldamento}\label{risoluzione-dellasimmetria-adattamento-turni-di-silenzio-riscaldamento}
+
+Per rompere l\textquotesingle asimmetria del passo precedente si introduce un ADATTAMENTO a soglia di scarica -\/- l\textquotesingle analogo a rate della variabile di recovery \textquotesingle u\textquotesingle{} del modello di Izhikevich usato in tutto il resto del progetto (sezione 1.2): piu\textquotesingle{} a lungo un ring resta acceso, piu\textquotesingle{} cresce una corrente negativa che alla fine lo spegne da solo. Un test dedicato su un ring isolato mostra che la scarica hard-clipped di questo modello rende l\textquotesingle attrattore fortemente bistabile (collasso brusco, non decadimento morbido); il parametro di adattamento e\textquotesingle{} stato scelto apposta cosi\textquotesingle{} che un bump sopravviva un turno pieno, si affievolisca nel successivo, e collassi da solo un turno dopo. Il problema torna quindi ad essere quello gia\textquotesingle{} risolto (accendere da silenzio), non piu\textquotesingle{} spodestare un bump a piena potenza. Uno schema con un turno di SILENZIO tra un ascolto e l\textquotesingle altro si e\textquotesingle{} rivelato necessario: senza quella pausa A tentava di riaccendersi mentre l\textquotesingle adattamento era ancora al culmine e falliva sempre.
+
+Anche con questi due correttivi, in 2000 episodi la sinapsi B-\textgreater A cresceva circa 7 volte piu\textquotesingle{} lento di A-\textgreater B e non arrivava mai all\textquotesingle autosufficienza. Diagnosi: nei primi episodi la posizione di B non si e\textquotesingle{} ancora stabilizzata (dipende da un A-\textgreater B non ancora consolidato), quindi il rinforzo di B-\textgreater A punta inizialmente a un bersaglio mobile e si diluisce invece di concentrarsi. Corretto con una fase di RISCALDAMENTO (solo A-\textgreater B per i primi 400 episodi) e un tasso di apprendimento piu\textquotesingle{} alto per B-\textgreater A.
+
+Risultato finale, con budget di training sufficiente (\textasciitilde2500 episodi): TUTTI e quattro gli scambi verificati arrivano al 100\% di affidabilita\textquotesingle{} in valutazione pulita (pesi congelati, nessun rumore esplorativo) -\/- B risponde al turno 1 e di nuovo al turno 5, A risponde al turno 3 e di nuovo al turno 7. Il turno 5 e il turno 7 sono associazioni di SECONDO ORDINE (la rete deve rispondere alla posizione assunta dall\textquotesingle altra DOPO che questa ha gia\textquotesingle{} risposto una prima volta, non al messaggio originale): si consolidano solo dopo che la prima risposta e\textquotesingle{} gia\textquotesingle{} stabile, quindi richiedono piu\textquotesingle{} episodi e appaiono nella mappa dei pesi finale come rinforzi secondari, piu\textquotesingle{} deboli del picco principale. L\textquotesingle asimmetria di partenza (B-\textgreater A che non imparava affatto) e\textquotesingle{} risolta in questo run, non solo attenuata.
+
+\includegraphics[width=5.8in,height=4.35in]{media/media/image23.png}
+
+\emph{Fig. 23 --- Curve di apprendimento di entrambi i canali, consolidamento delle due sinapsi, mappa W\_\allowbreak{}AB prima/dopo.}
+
 \textit{\textbf{Codice sorgente: dialogo\_\allowbreak{}stdp\_\allowbreak{}adattamento.py}}
 
 \lstinputlisting[language=Python]{scripts/dialogo_stdp_adattamento.py}
+\subsubsection{5.5.4 Piu\textquotesingle{} messaggi sulla stessa sinapsi: un test di interferenza}\label{piu-messaggi-sulla-stessa-sinapsi-un-test-di-interferenza}
+
+Ultima domanda, il vero test di generalizzazione nello stesso spirito della sezione 5.4 (che estende un singolo contesto a piu\textquotesingle{} contesti): la STESSA coppia di sinapsi W\_\allowbreak{}AB/W\_\allowbreak{}BA, condivisa (non una matrice separata per messaggio), puo\textquotesingle{} imparare a distinguere PIU\textquotesingle{} messaggi diversi senza che si interferiscano a vicenda? Due messaggi ben separati sull\textquotesingle anello (x=0.15 e x=0.65) vengono alternati durante il training.
+
+Risultato dopo 3000 episodi con messaggio scelto casualmente a ogni episodio: nessuna interferenza sul canale di ritorno (B-\textgreater A al 100\% per entrambi i messaggi, sia al turno 3 sia al turno 7), ma il canale A-\textgreater B si consolida pienamente solo per uno dei due messaggi (x=0.65: 100\%; x=0.15: 0\%) -\/- una possibile spiegazione, a quel punto, era una semplice esposizione ineguale durante il sorteggio casuale.
+
+Per verificarlo e\textquotesingle{} rilanciato l\textquotesingle esperimento con i messaggi alternati in ROUND-ROBIN invece che a sorteggio (9000 episodi, esposizione identica garantita per costruzione) -\/- e il risultato ha smentito quella spiegazione. Il canale A-\textgreater B non si e\textquotesingle{} consolidato per entrambi: si e\textquotesingle{} semplicemente invertito quale dei due messaggi vince (ora x=0.15 arriva al 100\% su tutti e quattro gli scambi, incluso il turno 5 che non si era mai consolidato prima; x=0.65 crolla a 0\% sia al turno 1 sia al turno 5). Con esposizione uguale garantita, il vincitore cambia ma il fenomeno resta identico: e\textquotesingle{} un\textquotesingle interferenza competitiva reale sul canale A-\textgreater B -\/- verificata su due run indipendenti, non un artefatto di esposizione ineguale -\/- mentre il canale B-\textgreater A resta completamente esente da interferenza su entrambe le run. La mappa dei pesi finale mostra un solo picco netto (per il messaggio vincente) invece delle due regioni separate che ci si aspetterebbe da un apprendimento senza competizione: un risultato onesto ma non ancora pienamente spiegato, lasciato come domanda aperta (analoga nello spirito al bias di posizione del ring attractor, sezione 9) piuttosto che forzato in una conclusione piu\textquotesingle{} comoda di quella osservata.
+
+\includegraphics[width=5.8in,height=4.35in]{media/media/image25.png}
+
+\emph{Fig. 24 --- Test di interferenza tra due messaggi (round-robin, 9000 episodi): B-\textgreater A pulito al 100\% per entrambi; A-\textgreater B mostra una vittoria competitiva di un solo messaggio, con un solo picco netto nella mappa dei pesi finale.}
+
 \textit{\textbf{Codice sorgente: dialogo\_\allowbreak{}multi\_\allowbreak{}messaggio.py}}
 
 \lstinputlisting[language=Python]{scripts/dialogo_multi_messaggio.py}
+\subsubsection{5.5.5 Un tentativo di correzione: normalizzazione omeostatica (risultato parziale)}\label{un-tentativo-di-correzione-normalizzazione-omeostatica-risultato-parziale}
+
+L\textquotesingle interferenza osservata in 5.5.4 suggerisce due spiegazioni possibili: o le sinapsi crescono senza limite e un messaggio finisce per monopolizzare la matrice condivisa, oppure il problema e\textquotesingle{} nella dinamica dell\textquotesingle attrattore di B stesso (una volta che un bump forte si e\textquotesingle{} stabilito in una zona, quella zona diventa un bacino di attrazione piu\textquotesingle{} facile da raggiungere anche per input diversi). La prima spiegazione e\textquotesingle{} verificabile direttamente: si aggiunge una NORMALIZZAZIONE OMEOSTATICA a W\_\allowbreak{}AB -\/- il totale dei pesi in ENTRATA su ogni neurone di B (somma di colonna) non puo\textquotesingle{} superare un tetto fisso, calibrato un po\textquotesingle{} sopra il valore raggiunto in un run di riferimento a un solo messaggio (sezione 5.5.3). E\textquotesingle{} un meccanismo biologicamente motivato: i neuroni veri regolano omeostaticamente il totale delle proprie sinapsi in ingresso. Un test di regressione con un solo messaggio conferma che la normalizzazione non interferisce con l\textquotesingle apprendimento quando non c\textquotesingle e\textquotesingle{} competizione (il totale di colonna resta ben sotto il tetto per tutto il training).
+
+Risultato con due messaggi (stessa configurazione della sezione 5.5.4: 9000 episodi, round-robin): la normalizzazione NON ribalta l\textquotesingle esito -\/- x=0.15 vince ancora e arriva al 100\% su tutti e quattro gli scambi, mentre x=0.65 fallisce sulla risposta primaria di B (turno 1). Pero\textquotesingle{} qualcosa di nuovo compare: per la prima volta si osserva un\textquotesingle INSTABILITA\textquotesingle{} TRANSITORIA vera (intorno all\textquotesingle episodio 7000, x=0.65 raggiunge brevemente il 100\% su tutti e quattro gli scambi prima di ricadere a 0\%) -\/- una prova diretta che il tetto sta creando competizione reale, non ignorata. E il messaggio perdente ottiene comunque un miglioramento parziale: la sua risposta di secondo ordine (turno 5) arriva al 100\% in valutazione finale, cosa che non succedeva mai senza normalizzazione. Il picco di W\_\allowbreak{}AB e\textquotesingle{} piu\textquotesingle{} basso che nel run precedente (0.036 contro 0.047), segno che il tetto sta davvero limitando la crescita.
+
+Interpretazione: la normalizzazione cambia la dinamica competitiva ma non cambia l\textquotesingle esito finale. Questo depone a favore della seconda spiegazione, non della prima -\/- il collo di bottiglia sembra essere la dinamica dell\textquotesingle attrattore di B (quale bacino diventa dominante), non semplicemente la capacita\textquotesingle{} sinaptica disponibile. Limitare i pesi rende la competizione visibile senza risolverla. Una verifica piu\textquotesingle{} diretta di questa ipotesi -\/- ad esempio separando la componente di inibizione globale di B per zona invece che sull\textquotesingle intera popolazione -\/- resta un lavoro futuro, non affrontato qui: un risultato onesto ma non ancora completamente spiegato, lasciato come domanda aperta piuttosto che forzato in una soluzione.
+
+\includegraphics[width=5.8in,height=4.35in]{media/media/image26.png}
+
+\emph{Fig. 25 --- Stesso test di interferenza con normalizzazione omeostatica su W\_\allowbreak{}AB: l\textquotesingle esito non cambia, ma compare un\textquotesingle instabilita\textquotesingle{} transitoria (episodio \textasciitilde7000) assente senza normalizzazione.}
+
 \textit{\textbf{Codice sorgente: dialogo\_\allowbreak{}multi\_\allowbreak{}normalizzato.py}}
 
 \lstinputlisting[language=Python]{scripts/dialogo_multi_normalizzato.py}
+\subsubsection{5.5.6 Correzione riuscita: esplorazione repulsiva}\label{correzione-riuscita-esplorazione-repulsiva}
+
+La normalizzazione (5.5.5) aveva mostrato che limitare la capacita\textquotesingle{} sinaptica non basta: rende la competizione visibile ma non la risolve. Un\textquotesingle ipotesi diversa: forse i due messaggi non competono davvero per una risorsa condivisa, ma la RICERCA casuale (l\textquotesingle impulso esplorativo a posizione uniforme casuale) riscopre per puro caso la stessa zona "facile" dell\textquotesingle anello per entrambi -\/- coerente con il bias di posizione gia\textquotesingle{} documentato per il ring attractor (sezione 9). La correzione proposta qui non tocca la capacita\textquotesingle{} sinaptica ma la RICERCA stessa: l\textquotesingle impulso esplorativo viene pescato con probabilita\textquotesingle{} inversamente proporzionale a quanto una zona e\textquotesingle{} gia\textquotesingle{} occupata da ALTRI messaggi (esclusa la propria riga, per non respingere un messaggio dalla zona che sta ancora cercando di consolidare -\/- un errore evitato esplicitamente dopo un test di regressione dedicato). Un messaggio ancora senza risposta viene cosi\textquotesingle{} spinto verso territorio libero invece che verso quello gia\textquotesingle{} rivendicato da un altro.
+
+Risultato (stessa configurazione delle sezioni 5.5.4-5.5.5: 9000 episodi, round-robin): la mappa dei pesi finale mostra per la prima volta DUE righe distinte e ben separate, una per ciascun messaggio (x=0.15 e x=0.65), ciascuna con la propria zona di risposta in B, senza sovrapposizione visibile. In valutazione pulita, SETTE scambi su otto arrivano al 100\% (entrambi i messaggi al 100\% su B turno 1, A turno 3, A turno 7; x=0.65 anche al 100\% su B turno 5) -\/- resta a 0\% solo il turno 5 di x=0.15, l\textquotesingle associazione piu\textquotesingle{} profonda (terzo ordine) e piu\textquotesingle{} lenta a consolidarsi gia\textquotesingle{} nelle sezioni precedenti. La curva di apprendimento periodica mostra che anche x=0.65 ha sbloccato quel controllo solo all\textquotesingle ULTIMISSIMO checkpoint del training (episodio 8999 su 9000): x=0.15 sembra sulla stessa traiettoria, solo leggermente in ritardo per puro caso, non bloccato da un\textquotesingle interferenza strutturale.
+
+NOTA (corretta dopo verifica diretta, sezione 5.5.7): l\textquotesingle ipotesi che il problema fosse un bias sistematico di posizione del ring attractor -\/- pochi punti "facili" dell\textquotesingle anello ritrovati per caso da messaggi diversi -\/- e\textquotesingle{} stata poi testata direttamente allenando piu\textquotesingle{} messaggi in modo completamente indipendente (nessuna sinapsi condivisa) e verificando se le posizioni di risposta si raggruppassero. Non l\textquotesingle hanno fatto (sezione 5.5.7): risultano sparse in modo compatibile con una distribuzione uniforme. L\textquotesingle ipotesi del bias di posizione va quindi ABBANDONATA come spiegazione di questo fenomeno. La correzione (esplorazione repulsiva) resta comunque efficace per il motivo corretto, piu\textquotesingle{} semplice: quando i messaggi condividono la STESSA matrice durante il training concorrente, la repulsione basata sull\textquotesingle occupazione ATTUALE di quella matrice (indipendentemente dalla causa dell\textquotesingle occupazione) impedisce comunque le collisioni, senza bisogno che esista un bias di posizione indipendente a monte.
+
+\includegraphics[width=5.8in,height=4.35in]{media/media/image27.png}
+
+\emph{Fig. 26 --- Con esplorazione repulsiva: due righe distinte e separate nella mappa dei pesi, 7 scambi su 8 al 100\%.}
+
 \textit{\textbf{Codice sorgente: dialogo\_\allowbreak{}multi\_\allowbreak{}repulsione.py}}
 
 \lstinputlisting[language=Python]{scripts/dialogo_multi_repulsione.py}
+\subsubsection{5.5.7 Verifica diretta dell\textquotesingle ipotesi del bias di posizione (smentita)}\label{verifica-diretta-dellipotesi-del-bias-di-posizione-smentita}
+
+La sezione 5.5.6 aveva spiegato il successo della repulsione con l\textquotesingle ipotesi che la ricerca casuale, senza memoria, riscoprisse per puro caso la stessa zona "facile" dell\textquotesingle anello per messaggi diversi -\/- collegandola al bias di posizione gia\textquotesingle{} documentato per il ring attractor (sezione 9). Un\textquotesingle ipotesi del genere si puo\textquotesingle{} verificare direttamente, non solo argomentare: si allenano molti messaggi diversi in modo COMPLETAMENTE INDIPENDENTE (una rete fresca per ciascuno, nessun peso condiviso, nessuna repulsione -\/- l\textquotesingle unica cosa in comune e\textquotesingle{} la fisica del ring attractor) e si controlla se le posizioni di risposta finali si raggruppano.
+
+Risultato con 6 messaggi indipendenti, spaziati uniformemente sull\textquotesingle anello (0.05, 0.20, 0.35, 0.50, 0.65, 0.80): le posizioni target apprese (0.360, 0.185, 0.345, 0.680, 0.965, 0.130) risultano SPARSE, non raggruppate. La distanza circolare media tra coppie di posizioni (0.260) coincide quasi esattamente con quella attesa per punti distribuiti uniformemente e indipendenti sull\textquotesingle anello (\textasciitilde0.26). Nessuna evidenza di clustering in questo campione.
+
+L\textquotesingle ipotesi del bias di posizione come causa dell\textquotesingle interferenza va quindi ABBANDONATA -\/- e il paragrafo corrispondente in 5.5.6 e\textquotesingle{} stato corretto di conseguenza. Questo non invalida la correzione (l\textquotesingle esplorazione repulsiva resta efficace, verificato empiricamente), ma ne cambia la spiegazione corretta: la repulsione funziona perche\textquotesingle{} contrasta la collisione REALE che nasce quando due processi di ricerca condividono la STESSA matrice durante il training CONCORRENTE -\/- non perche\textquotesingle{} esista un bias di posizione indipendente a monte. E\textquotesingle{} un utile promemoria metodologico, nello stesso spirito dichiarato nell\textquotesingle introduzione di questo documento: una correzione puo\textquotesingle{} funzionare per un motivo diverso da quello con cui viene proposta, e l\textquotesingle unico modo per saperlo e\textquotesingle{} testare la spiegazione stessa, non solo il suo effetto.
+
+\includegraphics[width=5.8in,height=5.8in]{media/media/image28.png}
+
+\emph{Fig. 27 --- Sei messaggi allenati in modo indipendente: le posizioni target (rosso) non si raggruppano attorno al messaggio (blu) ne\textquotesingle{} tra loro.}
+
 \textit{\textbf{Codice sorgente: diagnosi\_\allowbreak{}bias\_\allowbreak{}posizione.py}}
 
 \lstinputlisting[language=Python]{scripts/diagnosi_bias_posizione.py}
+\subsubsection{5.5.8 Scalabilita\textquotesingle{} a 3 messaggi: separazione migliore, consolidamento peggiore}\label{scalabilita-a-3-messaggi-separazione-migliore-consolidamento-peggiore}
+
+Domanda di scalabilita\textquotesingle{} diretta: la correzione che ha funzionato per 2 messaggi (5.5.6) regge anche con 3? Stesso meccanismo, nessuna modifica all\textquotesingle algoritmo, solo il budget di training scalato in proporzione (WARMUP e N\_\allowbreak{}EPISODES triplicati per dare a ciascun messaggio lo stesso numero di episodi effettivi della versione a 2).
+
+Primo tentativo (REPULSIONE\_\allowbreak{}ESPLORAZIONE=5, la stessa della versione a 2 messaggi, 13500 episodi): risultato parziale ma consistente -\/- tutti e tre i messaggi mostrano lo STESSO pattern (rispondono su A turno 3, B turno 5, A turno 7, ma falliscono su B turno 1), 9 scambi su 12 riusciti. La mappa dei pesi pero\textquotesingle{} rivela il motivo: un\textquotesingle unica associazione di secondo ordine domina a spese delle tre righe primarie, che restano deboli -\/- con 3 messaggi (che generano anche le proprie associazioni derivate) la richiesta di "slot" distinti sull\textquotesingle anello supera quello che una repulsione tarata per 2 messaggi riesce a separare.
+
+Secondo tentativo, per rinforzare la separazione: REPULSIONE\_\allowbreak{}ESPLORAZIONE portata a 20 (4x) e budget aumentato ulteriormente (18000 episodi). Risultato: la mappa dei pesi finale mostra ORA tre righe distinte correttamente posizionate vicino a x=0.1, 0.4, 0.7 -\/- la separazione e\textquotesingle{} migliorata, esattamente come previsto. Ma il tasso di successo e\textquotesingle{} PEGGIORATO (6 scambi su 12 invece di 9), e il picco di W\_\allowbreak{}AB e\textquotesingle{} crollato a 0.0067 (contro 0.0411 del primo tentativo) -\/- il canale B non si accende quasi mai nemmeno in valutazione pulita. Una repulsione troppo forte non discrimina tra "zona occupata da un ALTRO messaggio" (da evitare) e "piccola variazione naturale intorno alla propria posizione" (da non penalizzare): finisce per respingere anche il rinforzo legittimo, non solo le collisioni, impedendo alle righe di consolidarsi abbastanza da superare la soglia di accensione autonoma.
+
+Conclusione: separazione delle associazioni e forza del consolidamento sono due obiettivi in TENSIONE, non allineati come ci si aspetterebbe -\/- rinforzare la repulsione ottiene l\textquotesingle uno a spese dell\textquotesingle altro. Il valore giusto e\textquotesingle{} probabilmente intermedio tra 5 e 20, non ancora trovato in questo lavoro: un risultato onesto ma incompleto, lasciato come domanda aperta piuttosto che forzato in una conclusione piu\textquotesingle{} comoda di quella osservata.
+
+\includegraphics[width=5.8in,height=4.35in]{media/media/image29.png}
+
+\emph{Fig. 28 --- Scalabilita\textquotesingle{} a 3 messaggi con repulsione rinforzata: righe meglio separate, ma consolidamento piu\textquotesingle{} debole (6/12 invece di 9/12).}
+
 \textit{\textbf{Codice sorgente: dialogo\_\allowbreak{}multi\_\allowbreak{}repulsione\_\allowbreak{}3msg.py}}
 
 \lstinputlisting[language=Python]{scripts/dialogo_multi_repulsione_3msg.py}
+\subsubsection{5.5.9 Correzione risolutiva: repulsione solo per la scoperta, esplorazione locale per il consolidamento}\label{correzione-risolutiva-repulsione-solo-per-la-scoperta-esplorazione-locale-per-il-consolidamento}
+
+Tre tentativi precedenti (5.5.6 con repulsione debole, 5.5.8 con repulsione forte fissa e con annealing) avevano mostrato una tensione irrisolta: una repulsione abbastanza forte da separare bene le tre righe primarie lasciava il consolidamento debole (picco W\_\allowbreak{}AB \textasciitilde0.006-0.007), mentre una repulsione debole permetteva un consolidamento forte ma con le righe che collidevano (una sola associazione derivata dominante). Diagnosi riveduta: il problema non era la FORZA della repulsione ma il fatto che restasse attiva per TUTTO il training. Anche dopo che un messaggio ha gia\textquotesingle{} trovato una zona, ogni nuovo tentativo esplorativo veniva ripescato dalla distribuzione repulsiva GLOBALE -\/- che si sposta leggermente ogni volta che ALTRI messaggi si allenano -\/- impedendo al rinforzo di concentrarsi in un punto stabile anche a separazione gia\textquotesingle{} ottenuta.
+
+Correzione: due fasi per messaggio, non una sola strategia fissa per tutto il training. Finche\textquotesingle{} un messaggio non ha ancora trovato una prima risposta valida, esplorazione repulsiva (come prima, serve a separare le scoperte iniziali). Una volta trovata una prima risposta, il messaggio passa a un\textquotesingle esplorazione LOCALE -\/- un piccolo jitter attorno alla posizione gia\textquotesingle{} scoperta -\/- invece di continuare a ripescare dalla distribuzione globale: il consolidamento non dipende piu\textquotesingle{} da cosa succede altrove nella matrice mentre gli altri messaggi si allenano.
+
+Risultato (stessa configurazione delle prove precedenti: 13500 episodi, round-robin, 3 messaggi): 10 scambi su 12 riusciti -\/- il migliore finora, contro i 9/12 del primo tentativo con repulsione debole. Due messaggi su tre (x=0.10 e x=0.40) arrivano al 100\% su TUTTI e quattro gli scambi, con un dettaglio notevole: i rispettivi offset appresi (0.300 e 0.295) coincidono quasi esattamente col bias innato (0.3) -\/- una convergenza molto piu\textquotesingle{} pulita di qualunque run precedente, dove l\textquotesingle offset finale tendeva a discostarsi parecchio dal bias di partenza. Il terzo messaggio (x=0.70) arriva a 2/4 (B turno 1 e A turno 3 riusciti; B turno 5 e A turno 7 no). Le curve di allenamento mostrano anche una dinamica qualitativamente diversa e piu\textquotesingle{} sana rispetto a tutti i tentativi precedenti: x=0.10 e x=0.40 raggiungono il 100\% (episodio \textasciitilde1500 e \textasciitilde2000) e ci restano stabilmente fino alla fine, SENZA la continua oscillazione osservata in ogni tentativo precedente. La mappa dei pesi finale mostra tre macchie nitide, compatte e ben separate -\/- non piu\textquotesingle{} bande sfocate o un unico picco dominante.
+
+Il residuo (x=0.70 sulle associazioni di ordine piu\textquotesingle{} alto) e\textquotesingle{} verosimilmente solo una questione di fortuna nell\textquotesingle ordine di scoperta (nel round-robin x=0.70 e\textquotesingle{} sempre l\textquotesingle ultimo dei tre in ogni ciclo) piuttosto che un limite strutturale nuovo -\/- coerente con quanto gia\textquotesingle{} osservato altrove nel documento (le associazioni di ordine piu\textquotesingle{} alto richiedono sistematicamente piu\textquotesingle{} episodi delle prime, sezione 5.5.3). Separare la fase di scoperta da quella di consolidamento risolve quindi la tensione centrale diagnosticata in 5.5.8, senza il compromesso osservato nei tentativi con un\textquotesingle unica strategia fissa per tutto il training.
+
+\includegraphics[width=5.8in,height=4.35in]{media/media/image30.png}
+
+\emph{Fig. 29 --- Scoperta repulsiva + consolidamento locale: 10/12 scambi, due messaggi su tre perfetti, mappa dei pesi con tre macchie nitide e separate.}
+
 \textit{\textbf{Codice sorgente: dialogo\_\allowbreak{}multi\_\allowbreak{}scoperta\_\allowbreak{}locale.py}}
 
 \lstinputlisting[language=Python]{scripts/dialogo_multi_scoperta_locale.py}
+\subsubsection{5.5.10 Verifica Monte Carlo: il risultato e\textquotesingle{} robusto, ma l\textquotesingle ipotesi sul residuo era sbagliata}\label{verifica-monte-carlo-il-risultato-e-robusto-ma-lipotesi-sul-residuo-era-sbagliata}
+
+La sezione 5.5.9 aveva ottenuto 10 scambi su 12 con un solo seed casuale, e aveva attribuito il residuo (il terzo messaggio, ultimo del round-robin, che non raggiungeva le associazioni di ordine piu\textquotesingle{} alto) a sfortuna nell\textquotesingle ordine di scoperta. Un singolo run non basta a confermarlo -\/- lo stesso principio statistico gia\textquotesingle{} applicato nel progetto (PSTH su 25 prove indipendenti, sezione 2.11) richiede di ripetere l\textquotesingle esperimento con SEED diversi prima di trarre conclusioni sul perche\textquotesingle{} un risultato va in un certo modo. Otto repliche indipendenti (stessa configurazione esatta, nessuna modifica all\textquotesingle algoritmo, solo il seed di rng\_\allowbreak{}train) sono state eseguite in parallelo.
+
+Risultato aggregato: 88 successi su 96 controlli totali (8 seed x 3 messaggi x 4 scambi) = 91.7\% -\/- piu\textquotesingle{} alto della singola run originale (83\%), confermando che il meccanismo di scoperta-poi-consolidamento-locale e\textquotesingle{} robusto, non un colpo di fortuna isolato. Il turno 1 (B risponde) e il turno 3 (A risponde) sono risultati PERFETTAMENTE affidabili: 100\% per tutti e tre i messaggi, in tutti e 8 i seed senza eccezioni.
+
+{\def\LTcaptype{none} % do not increment counter
+\begin{longtable}[]{@{}
+  >{\raggedright\arraybackslash}p{(\linewidth - 8\tabcolsep) * \real{0.2000}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 8\tabcolsep) * \real{0.2000}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 8\tabcolsep) * \real{0.2000}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 8\tabcolsep) * \real{0.2000}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 8\tabcolsep) * \real{0.2000}}@{}}
+\toprule\noalign{}
+\begin{minipage}[b]{\linewidth}\raggedright
+Messaggio
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+B (turno 1)
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+A (turno 3)
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+B (turno 5)
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+A (turno 7)
+\end{minipage} \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+x=0.10 (primo) & 100\% & 100\% & 100\% & 100\% \\
+x=0.40 (secondo) & 100\% & 100\% & 37.5\% & 100\% \\
+x=0.70 (ultimo) & 100\% & 100\% & 75\% & 87.5\% \\
+\end{longtable}
+}
+
+L\textquotesingle ipotesi "sfortuna nell\textquotesingle ordine di scoperta, sempre l\textquotesingle ultimo a soffrirne" non regge di fronte ai dati aggregati. Il primo messaggio del round-robin (x=0.10) e\textquotesingle{} risultato perfetto su tutti e quattro gli scambi in TUTTI gli 8 seed, senza una sola eccezione -\/- il piu\textquotesingle{} affidabile in assoluto. Ma il piu\textquotesingle{} fragile non e\textquotesingle{} l\textquotesingle ultimo (x=0.70, 75-87.5\% sulle associazioni di ordine piu\textquotesingle{} alto) -\/- e\textquotesingle{} il SECONDO (x=0.40), che fallisce sul turno 5 in 5 seed su 8 (37.5\% di affidabilita\textquotesingle). Un pattern non-monotono rispetto alla posizione nel round-robin, diverso da quanto ipotizzato: il primo messaggio ha un vantaggio strutturale reale (probabilmente accede sempre per primo a una matrice ancora completamente libera, in ogni ciclo di training), ma tra il secondo e il terzo posto la relazione non e\textquotesingle{} semplicemente "peggio quanto piu\textquotesingle{} tardi". La causa esatta di questa asimmetria resta una domanda aperta, corretta rispetto alla spiegazione troppo semplice proposta in 5.5.9 -\/- un altro caso, nello stesso spirito dichiarato in apertura di questo documento, in cui verificare rigorosamente ha smentito una spiegazione plausibile ma non controllata.
+
+\includegraphics[width=5.8in,height=3.625in]{media/media/image31.png}
+
+\emph{Fig. 30 --- Tasso di successo per messaggio e scambio, aggregato su 8 seed indipendenti: B(t1) e A(t3) perfetti al 100\%, B(t5) e A(t7) variabili e non-monotoni rispetto alla posizione nel round-robin.}
+
 \textit{\textbf{Codice sorgente: dialogo\_\allowbreak{}multi\_\allowbreak{}scoperta\_\allowbreak{}locale\_\allowbreak{}montecarlo.py}}
 
 \lstinputlisting[language=Python]{scripts/dialogo_multi_scoperta_locale_montecarlo.py}
+\subsubsection{5.5.11 Disambiguazione posizione/valore: due effetti distinti, non uno}\label{disambiguazione-posizionevalore-due-effetti-distinti-non-uno}
+
+La sezione 5.5.10 aveva lasciato una domanda aperta: la fragilita\textquotesingle{} osservata sulle associazioni di ordine piu\textquotesingle{} alto segue la POSIZIONE nel round-robin o il VALORE del messaggio? Il test diretto: ripetere le stesse 8 repliche con l\textquotesingle ordine del round-robin RUOTATO -\/- {[}0.40, 0.70, 0.10{]} invece di {[}0.10, 0.40, 0.70{]}, stesso codice, stessi seed (101-108) -\/- e confrontare quale dei due (posizione o valore) resta costante.
+
+{\def\LTcaptype{none} % do not increment counter
+\begin{longtable}[]{@{}
+  >{\raggedright\arraybackslash}p{(\linewidth - 4\tabcolsep) * \real{0.3333}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 4\tabcolsep) * \real{0.3333}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 4\tabcolsep) * \real{0.3333}}@{}}
+\toprule\noalign{}
+\begin{minipage}[b]{\linewidth}\raggedright
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Ordine originale {[}0.10, 0.40, 0.70{]}
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Ordine permutato {[}0.40, 0.70, 0.10{]}
+\end{minipage} \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+Posizione 1 & x=0.10: B5=100\% A7=100\% & x=0.40: B5=50\% A7=100\% \\
+Posizione 2 & x=0.40: B5=37.5\% A7=100\% & x=0.70: B5=37.5\% A7=87.5\% \\
+Posizione 3 & x=0.70: B5=75\% A7=87.5\% & x=0.10: B5=50\% A7=100\% \\
+\end{longtable}
+}
+
+Il risultato disambigua in modo netto DUE effetti distinti, che nella prima osservazione (5.5.9-5.5.10) apparivano confusi insieme:
+
+Il turno 5 (B risponde di nuovo) segue la POSIZIONE: chi occupa la posizione 2 del round-robin ottiene ESATTAMENTE 37.5\% di affidabilita\textquotesingle{} in entrambi gli ordini -\/- prima era il messaggio x=0.40 a trovarsi li\textquotesingle, ora e\textquotesingle{} x=0.70, ma il tasso di successo e\textquotesingle{} identico alla prima cifra decimale. E\textquotesingle{} un effetto puro dell\textquotesingle ordine temporale di allenamento (probabilmente legato a come si sovrappongono le fasi di scoperta dei tre messaggi nel tempo), non del valore specifico.
+
+Il turno 7 (A risponde di nuovo) segue invece il VALORE: il messaggio x=0.70 resta a 87.5\% sia quando occupa la posizione 3 (ordine originale) sia quando occupa la posizione 2 (ordine permutato) -\/- mentre x=0.10 e x=0.40 restano sempre al 100\% indipendentemente da dove vengono collocati nel round-robin. E\textquotesingle{} un effetto legato alla posizione SULL\textquotesingle ANELLO di x=0.70 specificamente (forse un\textquotesingle interazione con la geometria discretizzata, nello stesso spirito del bias di posizione gia\textquotesingle{} documentato per il ring attractor in altre sezioni), non all\textquotesingle ordine di allenamento.
+
+Una disambiguazione pulita, ottenuta con un controllo diretto invece che con altre ipotesi non testate: due fenomeni indipendenti si sovrapponevano nell\textquotesingle osservazione originale, ciascuno legato a una causa diversa (ordine temporale per il turno 5, valore/posizione sull\textquotesingle anello per il turno 7). Nessuno dei due e\textquotesingle{} stato risolto qui -\/- restano entrambi documentati come proprieta\textquotesingle{} note del sistema, non piu\textquotesingle{} come un\textquotesingle unica domanda aperta confusa.
+
+\includegraphics[width=5.8in,height=2.63636in]{media/media/image32.png}
+
+\emph{Fig. 31 --- Confronto diretto tra i due ordini di round-robin: il turno 5 segue la posizione (37.5\% costante in posizione 2), il turno 7 segue il valore (87.5\% costante per x=0.70).}
+
 \textit{\textbf{Codice sorgente: dialogo\_\allowbreak{}multi\_\allowbreak{}scoperta\_\allowbreak{}locale\_\allowbreak{}permutazione.py}}
 
 \lstinputlisting[language=Python]{scripts/dialogo_multi_scoperta_locale_permutazione.py}
+\subsubsection{5.5.12 Tentativo di correzione dell\textquotesingle effetto posizionale: piu\textquotesingle{} equo, ma non migliore}\label{tentativo-di-correzione-delleffetto-posizionale-piu-equo-ma-non-migliore}
+
+La sezione 5.5.11 aveva isolato un effetto posizionale puro sul turno 5: chi occupa la posizione 2 del round-robin FISSO ({[}0.10, 0.40, 0.70{]} ripetuto identico ogni ciclo) ottiene 37.5\% di affidabilita\textquotesingle, indipendentemente da quale messaggio la occupi. Correzione tentata: RIMESCOLARE l\textquotesingle ordine del ciclo a ogni giro invece di ripeterlo fisso -\/- nessun messaggio dovrebbe restare bloccato nella stessa posizione per tutto il training. Stesso protocollo di verifica: 8 seed indipendenti (101-108).
+
+{\def\LTcaptype{none} % do not increment counter
+\begin{longtable}[]{@{}
+  >{\raggedright\arraybackslash}p{(\linewidth - 8\tabcolsep) * \real{0.2000}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 8\tabcolsep) * \real{0.2000}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 8\tabcolsep) * \real{0.2000}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 8\tabcolsep) * \real{0.2000}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 8\tabcolsep) * \real{0.2000}}@{}}
+\toprule\noalign{}
+\begin{minipage}[b]{\linewidth}\raggedright
+Messaggio
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+B (turno 1)
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+A (turno 3)
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+B (turno 5)
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+A (turno 7)
+\end{minipage} \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+x=0.10 & 100\% & 100\% & 75\% & 87.5\% \\
+x=0.40 & 100\% & 100\% & 50\% & 75\% \\
+x=0.70 & 100\% & 100\% & 75\% & 87.5\% \\
+\end{longtable}
+}
+
+Risultato onesto ma non quello sperato: il totale aggregato SCENDE a 87.5\% (84/96), contro il 91.7\% (88/96) dell\textquotesingle ordine fisso originale (sezione 5.5.10). La correzione raggiunge pero\textquotesingle{} il suo obiettivo ristretto -\/- nessun messaggio resta piu\textquotesingle{} sistematicamente perfetto o sistematicamente svantaggiato come prima (x=0.10 era perfetto al 100\% sul turno 5 nell\textquotesingle ordine fisso, ora scende al 75\%; x=0.40 sale dal 37.5\% al 50\%) -\/- ma mescolare introduce piu\textquotesingle{} variabilita\textquotesingle{} di quanta ne rimuova: ogni messaggio, in momenti diversi del training, capita comunque a fianco di un ordine sfavorevole, e la somma di questi episodi sfavorevoli per TUTTI e tre pesa di piu\textquotesingle{} del vantaggio strutturale che prima si concentrava tutto su UN messaggio soltanto. Un trade-off genuino tra equita\textquotesingle{} (nessuno sistematicamente svantaggiato) e prestazione aggregata (l\textquotesingle ordine fisso, pur ingiusto verso un messaggio specifico, restava complessivamente piu\textquotesingle{} affidabile) -\/- documentato onestamente come risultato negativo rispetto all\textquotesingle obiettivo di migliorare il totale, nello stesso spirito dichiarato in apertura di questo documento.
+
 \textit{\textbf{Codice sorgente: dialogo\_\allowbreak{}multi\_\allowbreak{}scoperta\_\allowbreak{}locale\_\allowbreak{}mischiato.py}}
 
 \lstinputlisting[language=Python]{scripts/dialogo_multi_scoperta_locale_mischiato.py}
+\subsubsection{5.5.13 Seconda correzione: estendere la scoperta+consolidamento locale al canale di ritorno}\label{seconda-correzione-estendere-la-scopertaconsolidamento-locale-al-canale-di-ritorno}
+
+Il tentativo sull\textquotesingle effetto posizionale (5.5.12) non era bastato -\/- rimaneva ancora da affrontare l\textquotesingle effetto legato al VALORE (x=0.70 fragile all\textquotesingle87.5\% sul turno 7, ovunque collocato nell\textquotesingle ordine, sezione 5.5.11). Osservazione strutturale: il meccanismo a due fasi (repulsione per la scoperta iniziale, poi esplorazione locale per il consolidamento) introdotto in dialogo\_\allowbreak{}multi\_\allowbreak{}scoperta\_\allowbreak{}locale.py era stato applicato SOLO al canale A-\textgreater B (turni 1 e 5) -\/- il canale di ritorno B-\textgreater A (turni 3 e 7) era rimasto con la sola ricerca repulsiva per tutta la durata del training, la stessa condizione che aveva causato instabilita\textquotesingle{} sul canale A-\textgreater B prima della correzione. Estensione naturale: applicare lo stesso trattamento a due fasi anche al canale di ritorno (scoperta\_\allowbreak{}A, analogo a scoperta\_\allowbreak{}B).
+
+{\def\LTcaptype{none} % do not increment counter
+\begin{longtable}[]{@{}
+  >{\raggedright\arraybackslash}p{(\linewidth - 8\tabcolsep) * \real{0.2000}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 8\tabcolsep) * \real{0.2000}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 8\tabcolsep) * \real{0.2000}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 8\tabcolsep) * \real{0.2000}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 8\tabcolsep) * \real{0.2000}}@{}}
+\toprule\noalign{}
+\begin{minipage}[b]{\linewidth}\raggedright
+Messaggio
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+B (turno 1)
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+A (turno 3)
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+B (turno 5)
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+A (turno 7)
+\end{minipage} \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+x=0.10 & 100\% & 100\% & 87.5\% & 100\% \\
+x=0.40 & 100\% & 100\% & 75\% & 100\% \\
+x=0.70 & 100\% & 100\% & 87.5\% & 100\% \\
+\end{longtable}
+}
+
+Risultato (8 seed indipendenti, stesso protocollo delle sezioni precedenti): 92 successi su 96 controlli = 95.8\%, il migliore finora -\/- contro il 91.7\% dell\textquotesingle ordine fisso originale e l\textquotesingle87.5\% del tentativo con ordine mescolato. Il turno 7 (l\textquotesingle effetto legato al valore x=0.70) e\textquotesingle{} ORA RISOLTO al 100\%, senza eccezioni in nessuno degli 8 seed -\/- il primo dei due effetti identificati in 5.5.11 completamente eliminato, non solo attenuato. Il turno 5 (l\textquotesingle effetto posizionale) migliora anche lui, da una media del 70.8\% all\textquotesingle83.3\%, e diventa molto piu\textquotesingle{} uniforme tra i messaggi (75-87.5\% invece del 37.5-100\% originale, dove un messaggio era perfetto e un altro molto fragile) -\/- non risolto del tutto, ma sensibilmente attenuato E reso piu\textquotesingle{} equo, senza il compromesso negativo osservato nel tentativo precedente (5.5.12, dove rendere il sistema piu\textquotesingle{} equo costava un totale piu\textquotesingle{} basso).
+
+Il fatto che estendere il canale di ritorno abbia migliorato ANCHE il turno 5 (che dipende dal canale A-\textgreater B, non da quello corretto qui) e\textquotesingle{} un indizio interessante: i due canali, pur allenati con dinamiche separate, non sono del tutto indipendenti nella pratica -\/- un canale di ritorno piu\textquotesingle{} stabile sembra ridurre indirettamente il rumore accumulato anche sul canale diretto. Una connessione non esplorata ulteriormente in questo lavoro, lasciata come osservazione per sviluppi futuri.
+
+\includegraphics[width=5.8in,height=3.22222in]{media/media/image33.png}
+
+\emph{Fig. 32 --- Confronto diretto tra ordine fisso originale (91.7\%) e correzione bidirezionale (95.8\%): turno 7 risolto al 100\%, turno 5 migliorato e piu\textquotesingle{} uniforme.}
+
 \textit{\textbf{Codice sorgente: dialogo\_\allowbreak{}multi\_\allowbreak{}scoperta\_\allowbreak{}bidirezionale.py}}
 
 \lstinputlisting[language=Python]{scripts/dialogo_multi_scoperta_bidirezionale.py}

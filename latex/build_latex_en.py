@@ -1,32 +1,31 @@
 #!/usr/bin/env python3
 """
-Rigenera main.tex a partire da resoconto_progetto_ESTESO.docx (nella
-directory del progetto, un livello sopra).
+Regenerates main_en.tex from resoconto_progetto_ESTESO_EN.docx (English
+translation, one directory above), mirroring build_latex.py's pipeline
+for the Italian version.
 
 Pipeline:
-1. pandoc converte il docx in LaTeX standalone (preambolo completo,
-   indice, immagini estratte in media/).
-2. Questo script sostituisce ogni blocco di codice sorgente (inserito
-   nel docx come tabella con una riga per linea, in font Consolas --
-   pandoc lo converte in prosa illeggibile, con caratteri LaTeX speciali
-   mal escapati) con un vero \\lstinputlisting che punta al file
-   sorgente reale in scripts/ o geant4_src/ -- molto piu' pulito e
-   sempre sincronizzato con il codice vero, non con una sua trascrizione.
-3. Corregge alcuni simboli Unicode (≥, →, µ, ecc.) che non hanno un
-   glifo nel font di default sotto XeTeX, sostituendoli con l'equivalente
-   in modalita' matematica LaTeX.
-4. Aggiunge la configurazione del pacchetto listings (syntax highlighting
-   di base per Python/C++) subito prima di \\begin{document}.
+1. pandoc converts the docx to standalone LaTeX (full preamble, table of
+   contents, images extracted to media/).
+2. This script replaces every source-code block (inserted in the docx as
+   a one-row-per-line table in Consolas font -- pandoc turns it into
+   unreadable prose with badly escaped LaTeX special characters) with a
+   real \\lstinputlisting pointing at the actual source file in scripts/
+   or geant4_src/ -- much cleaner and always in sync with the real code,
+   not a transcription of it. Source files are shared with the Italian
+   build (code and file names are identical in both languages).
+3. Fixes a handful of Unicode symbols (>=, ->, µ, etc.) that have no
+   glyph in the default font under XeTeX, replacing them with the LaTeX
+   math-mode equivalent.
+4. Adds the listings package configuration (basic Python/C++ syntax
+   highlighting) right before \\begin{document}.
 
-Uso:
-    python3 build_latex.py            # rigenera main.tex
-    tectonic main.tex                 # compila in main.pdf (o pdflatex/xelatex)
+Usage:
+    python3 build_latex_en.py         # regenerates main_en.tex
+    tectonic main_en.tex              # compiles to main_en.pdf
 
-Prima di eseguire: aggiornare scripts/ e geant4_src/ con le versioni
-correnti dei file sorgente (cp ../*.py scripts/; cp ../geant4_cnao_ring/src/*.cc
-../geant4_cnao_ring/include/*.hh ../geant4_cnao_ring/*.cc
-../geant4_cnao_ring/analysis/*.py geant4_src/), altrimenti i listing
-punteranno a versioni vecchie.
+Run build_latex.py first (or keep scripts/ and geant4_src/ in sync some
+other way) since this script reuses the same source-file directories.
 """
 
 import re
@@ -36,8 +35,8 @@ import sys
 import tempfile
 
 BASE = os.path.dirname(os.path.abspath(__file__))
-DOCX = os.path.join(BASE, '..', 'resoconto_progetto_ESTESO.docx')
-OUT_TEX = os.path.join(BASE, 'main.tex')
+DOCX = os.path.join(BASE, '..', 'resoconto_progetto_ESTESO_EN.docx')
+OUT_TEX = os.path.join(BASE, 'main_en.tex')
 
 SYMBOL_SUBS = [
     ('≥', '$\\geq$'),
@@ -94,10 +93,10 @@ def run_pandoc(tmp_tex):
         'pandoc', DOCX, '-o', tmp_tex,
         '--extract-media=media', '--wrap=preserve', '--standalone',
         '--toc', '--toc-depth=2',
-        '-M', 'title=Dalla comunicazione tra due neuroni a una politica decisionale appresa',
-        "-M", "author=Andrea Corti --- Universita' di Pavia (TLB / Fisica)",
-        '-M', 'date=Settembre 2026',
-        '-M', 'lang=it',
+        '-M', 'title=From Communication Between Two Neurons to a Learned Decision Policy',
+        '-M', "author=Andrea Corti --- University of Pavia (TLB / Physics)",
+        '-M', 'date=September 2026',
+        '-M', 'lang=en',
         '--pdf-engine=xelatex',
     ]
     subprocess.run(cmd, cwd=BASE, check=True)
@@ -113,15 +112,11 @@ def main():
     finally:
         os.remove(tmp_tex)
 
-    # media/ viene estratto gia' relativo a BASE (niente prefisso da correggere
-    # quando si esegue pandoc con cwd=BASE)
+    # media/ is extracted already relative to BASE (shared with the Italian
+    # build -- no prefix to fix since pandoc runs with cwd=BASE)
 
     for ch, repl in SYMBOL_SUBS:
         text = text.replace(ch, repl)
-
-    # Refuso pre-esistente nel docx sorgente (glitch di digitazione: lettere
-    # cirilliche omoglife al posto di quelle latine in "costruire")
-    text = text.replace('костruire', 'costruire')
 
     name_to_path = {}
     for d, relprefix in [(os.path.join(BASE, 'scripts'), 'scripts'),
@@ -139,7 +134,7 @@ def main():
             return 'C++'
         return 'Python'
 
-    pattern = re.compile(r'\\emph\{\\textbf\{Codice sorgente: (.*?)\}\}')
+    pattern = re.compile(r'\\emph\{\\textbf\{Source code: (.*?)\}\}')
     matches = list(pattern.finditer(text))
 
     out = []
@@ -154,22 +149,17 @@ def main():
 
         search_start = m.end()
         next_marker_pos = matches[idx + 1].start() if idx + 1 < len(matches) else len(text)
-        # Bug fix: \subsubsection{ needs TWO "sub" prefixes, so a plain
-        # (sub)? (zero-or-one) missed every \subsubsection{ heading -- it
-        # only matched \section{/\subsection{. This silently let the
-        # code-table-stripping loop skip past whole \subsubsection{}
-        # headings (and the prose between them) when hunting for the next
-        # heading, corrupting entire subsection runs (e.g. all of 5.5.x,
-        # which uses \subsubsection{} exclusively) instead of stopping at
-        # each one. (sub)* (zero-or-more) matches any nesting depth.
+        # Bug fix (same as build_latex.py): \subsubsection{ needs TWO "sub"
+        # prefixes, so (sub)? missed every \subsubsection{ heading -- (sub)*
+        # matches any nesting depth.
         next_heading = re.search(r'\\(?:sub)*section\{', text[search_start:next_marker_pos])
         block_end = search_start + next_heading.start() if next_heading else next_marker_pos
 
-        out.append(f'\\textit{{\\textbf{{Codice sorgente: {raw_caption_escaped}}}}}\n\n')
+        out.append(f'\\textit{{\\textbf{{Source code: {raw_caption_escaped}}}}}\n\n')
         for fn in filenames:
             rel = name_to_path.get(fn)
             if rel is None:
-                out.append(f'% ATTENZIONE: file non trovato per la didascalia: {fn}\n')
+                out.append(f'% WARNING: file not found for caption: {fn}\n')
                 n_missing += 1
                 continue
             out.append(f'\\lstinputlisting[language={lang_for(fn)}]{{{rel}}}\n')
@@ -180,20 +170,19 @@ def main():
     result = ''.join(out)
     result = result.replace('\n\\begin{document}', LISTINGS_SETUP, 1)
 
-    # Bug fix: filenames like dialogo_spiking_bidirezionale_gate.py have no
-    # break points for LaTeX (an escaped underscore \_ does not by itself
-    # allow a line break), so in narrow table cells (the final File/
-    # Sezione/Contenuto index table) long filenames overflowed into the
-    # neighbouring column instead of wrapping. \lstinputlisting paths use
-    # plain (non-escaped) underscores and are therefore untouched by this.
+    # Same underscore-line-break fix as the Italian build (build_latex.py):
+    # long filenames in the final File/Section/Content index table need an
+    # explicit break point after each escaped underscore, or they overflow
+    # into the neighbouring column. \lstinputlisting paths use plain
+    # (non-escaped) underscores and are therefore untouched by this.
     result = result.replace('\\_', '\\_\\allowbreak{}')
 
     with open(OUT_TEX, 'w', encoding='utf-8') as f:
         f.write(result)
 
-    print(f'{len(matches)} marker di codice trovati, {n_listings} listing inseriti, '
-          f'{n_missing} file non trovati (controllare)')
-    print(f'Scritto: {OUT_TEX}')
+    print(f'{len(matches)} code markers found, {n_listings} listings inserted, '
+          f'{n_missing} files not found (check these)')
+    print(f'Written: {OUT_TEX}')
     if n_missing:
         sys.exit(1)
 
