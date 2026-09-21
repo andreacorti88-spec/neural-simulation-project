@@ -35,7 +35,8 @@ The complete Italian report (almost 400 pages, every experiment explained in det
 | [`/visualizations`](visualizations) | Interactive 3D visualizations (self-contained HTML) |
 | [`/report`](report) | Full report (PDF/DOCX, Italian) and the English project summary |
 | [`/geant4_cnao_ring`](geant4_cnao_ring) | Geant4 project (C++): physical impact of CNAO beams on the neural architecture — see the dedicated README ([English version](geant4_cnao_ring/README_EN.md)) |
-| [`/geant4dna_icsd`](geant4dna_icsd) | Geant4-DNA project (C++): nanodosimetry at the secondary-electron level, coupled to `geant4_cnao_ring` (sections 5.39-5.40) — dedicated README (Italian only for now) |
+| [`/geant4dna_icsd`](geant4dna_icsd) | Geant4-DNA project (C++): nanodosimetry at the secondary-electron level, coupled to `geant4_cnao_ring` (sections 5.39-5.41) — dedicated README (Italian only for now) |
+| [`/geant4dna_ssbdsb`](geant4dna_ssbdsb) | Geant4-DNA project (C++, `moleculardna` example): real DNA damage (SSB/DSB) from CNAO secondary electrons (section 5.42) — dedicated README (Italian only for now) |
 
 ## How to run
 

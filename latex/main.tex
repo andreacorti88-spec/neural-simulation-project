@@ -1535,6 +1535,58 @@ Conclusione: il collegamento nanodosimetrico completato nella 5.39-5.40 riposa s
 
 \emph{\textbf{Verificato con nanoICSD (seed espliciti 201-204), geant4dna\_icsd/build/results\_mc\_seed\_check/}}
 
+\subsection{5.42 Oltre gli ICSD: danno reale al DNA (SSB/DSB) da elettroni secondari CNAO}\label{oltre-gli-icsd-danno-reale-al-dna-ssbdsb-da-elettroni-secondari-cnao}
+
+Chiude il punto lasciato aperto nel capitolo 9 (sviluppi futuri): estendere la catena fisica gia\textquotesingle{} verificata (dose macroscopica -\textgreater{} spettro di elettroni secondari -\textgreater{} ICSD nanodosimetrico, sezioni 5.39-5.41) fino al danno diretto al DNA -\/- rotture singole e doppie di filamento (SSB/DSB).
+
+Primo tentativo, con l\textquotesingle esempio ufficiale Geant4-DNA dnadamage1: bloccato da una dipendenza reale, non aggirabile in tempi brevi -\/- richiede un file di geometria del DNA (VoxelStraight.fab2g4dna) generato da uno strumento esterno (DnaFabric) non disponibile e non installabile rapidamente. Verificato, non ipotizzato, prima di abbandonare la strada.
+
+Alternativa trovata e verificata funzionante: l\textquotesingle esempio ufficiale piu\textquotesingle{} recente moleculardna (Geant4-DNA collaboration), che scarica automaticamente la propria geometria di riferimento (200.000 segmenti di DNA di 216 coppie di basi in un volume di 100x30x100nm, geometria "cylinders" per studi parametrici) senza strumenti esterni. Compilato con successo (mai testato prima in nessun ambiente disponibile) e verificato con un run di prova prima di usarlo sul serio -\/- restituisce categorie complete di danno (SSB, SSB prossimali, doppio-SSB, DSB semplici e complessi) per evento, con energia e posizione.
+
+Eseguito con le energie reali dello spettro di elettroni secondari CNAO (sezione 5.39): mediana 1860 eV (10.000 primari) e 90-esimo percentile 7332 eV (5.000 primari).
+
+{\def\LTcaptype{none} % do not increment counter
+\begin{longtable}[]{@{}
+  >{\raggedright\arraybackslash}p{(\linewidth - 12\tabcolsep) * \real{0.1429}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 12\tabcolsep) * \real{0.1429}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 12\tabcolsep) * \real{0.1429}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 12\tabcolsep) * \real{0.1429}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 12\tabcolsep) * \real{0.1429}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 12\tabcolsep) * \real{0.1429}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 12\tabcolsep) * \real{0.1429}}@{}}
+\toprule\noalign{}
+\begin{minipage}[b]{\linewidth}\raggedright
+Energia reale
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+N primari
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Rotture singole (SB)
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Rotture doppie (DSB)
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+SB/primario
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+DSB/primario
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Frazione DSB
+\end{minipage} \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+1860 eV (mediana) & 10000 & 1055 & 152 & 0.1055 & 0.0152 & 12.6\% \\
+7332 eV (p90) & 5000 & 2688 & 215 & 0.5376 & 0.0430 & 7.4\% \\
+\end{longtable}
+}
+
+Osservazione fisica non banale: l\textquotesingle elettrone a energia piu\textquotesingle{} alta (7332 eV) produce piu\textquotesingle{} danno assoluto (traccia piu\textquotesingle{} lunga, piu\textquotesingle{} ionizzazioni totali), ma una frazione RELATIVAMENTE minore di danno e\textquotesingle{} costituita da rotture doppie (7.4\% contro 12.6\%). Spiegazione coerente con la fisica nota: il LET di un elettrone diminuisce all\textquotesingle aumentare della sua energia in questo intervallo -\/- l\textquotesingle elettrone piu\textquotesingle{} lento (mediana, LET piu\textquotesingle{} alto) deposita la sua energia in modo piu\textquotesingle{} concentrato lungo il percorso, favorendo la formazione di rotture ravvicinate su entrambi i filamenti (DSB); l\textquotesingle elettrone piu\textquotesingle{} veloce (p90, LET piu\textquotesingle{} basso) distribuisce energia simile su un percorso piu\textquotesingle{} lungo, con danno piu\textquotesingle{} sparso e quindi relativamente meno complesso.
+
+Verifica Monte Carlo (stesso principio delle sezioni 5.32/5.41, qui esteso a un terzo strumento -\/- anche moleculardna non chiamava mai un seed esplicito nel codice originale, corretto aggiungendo un\textquotesingle opzione -s): ripetuta la configurazione mediana su 3 seed indipendenti (5.000 eventi ciascuno). SB stabile (CV 1.8\%: 522, 514, 504); DSB piu\textquotesingle{} rumoroso (CV 12.4\%: 60, 77, 68), come atteso per conteggi molto piu\textquotesingle{} piccoli (scaling di Poisson). La media dei 3 seed (SB/primario=0.1027, DSB/primario=0.0137) e\textquotesingle{} coerente entro il rumore statistico col run singolo originale a 10.000 eventi (0.1055, 0.0152) -\/- nessuna discrepanza sistematica.
+
+Limite dichiarato: la geometria "cylinders" e\textquotesingle{} un volume di studio parametrico (200.000 segmenti brevi di DNA in una regione di collocazione di 100x30x100nm), non un intero nucleo cellulare -\/- questi sono resa (yield) relative per primario in quel volume definito, non una previsione assoluta di danno a livello di cellula intera. Solo due punti energetici testati, non l\textquotesingle intero spettro continuo di elettroni secondari pesato per la sua vera distribuzione (sezione 5.39). Entrambi i limiti sono lo stesso tipo di onesta\textquotesingle{} dichiarazione gia\textquotesingle{} applicata ovunque in questo progetto -\/- un primo livello funzionante e verificato, non la parola definitiva.
+
+\emph{\textbf{Eseguito con moleculardna (Geant4-DNA collaboration), geant4dna\_ssbdsb/build/, energie dallo spettro reale della sezione 5.39}}
+
 \section{6. Realismo biofisico e densita\textquotesingle{} sinaptica: confronto con l\textquotesingle Allen Institute}\label{realismo-biofisico-e-densita-sinaptica-confronto-con-lallen-institute}
 
 L\textquotesingle ultima fase del progetto nasce da un confronto esplicito con lo stato dell\textquotesingle arte reale della ricerca (sezione 4.5): il presente progetto aveva superato l\textquotesingle Allen Institute nel numero puro di neuroni simulati (40 milioni contro \textasciitilde10 milioni), ma con una densita\textquotesingle{} sinaptica per neurone drasticamente inferiore (\textasciitilde31 contro \textasciitilde2.600) e un dettaglio biofisico per neurone molto piu\textquotesingle{} semplice. Questa sezione descrive il tentativo di colmare entrambi i divari contemporaneamente.
@@ -1791,7 +1843,7 @@ Il collegamento nanodosimetrico (sezioni 5.39-5.41) si ferma al livello degli IC
   Investigare formalmente l\textquotesingle origine del bias sistematico di posizione osservato nel ring attractor (sezioni 4.4.2, 5.1, 5.2), per determinare se sia un artefatto puramente numerico o rifletta una proprieta\textquotesingle{} reale (per quanto non desiderata) del modello discretizzato
 \end{itemize}
 
-Gli sviluppi futuri sopra riguardano il filone di neuroscienza pura. Per il filone di fisica (Geant4/CNAO/Chiba), i punti aperti restano quelli del progetto gemello geant4dna\_icsd (vedi il suo README): implementare il dataset di sezioni d\textquotesingle urto "comuni" definito nel paper Villagrasa/Baiocco (richiede estrarre i valori numerici dal materiale supplementare e scrivere una sottoclasse G4VEmModel dedicata -\/- un lavoro sostanziale, non un\textquotesingle estensione da weekend, come il paper stesso segnala) e, soprattutto, estendere la catena fisica gia\textquotesingle{} verificata (dose macroscopica -\textgreater{} spettro di elettroni secondari -\textgreater{} ICSD nanodosimetrico) fino al danno al DNA (SSB/DSB) con un modello geometrico di nucleo cellulare -\/- il passo naturale successivo per rendere il collegamento clinicamente interpretabile, non solo fisicamente coerente.
+Gli sviluppi futuri sopra riguardano il filone di neuroscienza pura. Per il filone di fisica (Geant4/CNAO/Chiba), i punti aperti restano quelli del progetto gemello geant4dna\_icsd (vedi il suo README): implementare il dataset di sezioni d\textquotesingle urto "comuni" definito nel paper Villagrasa/Baiocco (richiede estrarre i valori numerici dal materiale supplementare e scrivere una sottoclasse G4VEmModel dedicata -\/- un lavoro sostanziale, non un\textquotesingle estensione da weekend, come il paper stesso segnala) e, soprattutto, estendere la catena fisica gia\textquotesingle{} verificata (dose macroscopica -\textgreater{} spettro di elettroni secondari -\textgreater{} ICSD nanodosimetrico) fino al danno al DNA (SSB/DSB) con un modello geometrico di nucleo cellulare -\/- il passo naturale successivo per rendere il collegamento clinicamente interpretabile, non solo fisicamente coerente. \emph{{[}Aggiornamento: il danno SSB/DSB e\textquotesingle{} stato completato nella sezione 5.42, con l\textquotesingle esempio moleculardna invece di dnadamage1/molecularDNA (bloccato da una dipendenza esterna mancante) -\/- resta aperto solo il dataset di sezioni d\textquotesingle urto comuni del paper.{]}}
 
 \section{10. Glossario dei termini tecnici usati nel documento}\label{glossario-dei-termini-tecnici-usati-nel-documento}
 
@@ -1932,6 +1984,7 @@ dialogo\_spiking\_cnao\_knockout\_top5\_mc.py / top20\_mc.py & 5.38 & La dimensi
 geant4\_cnao\_ring (DetectorConstruction.cc, taglio di produzione) & 5.39 & Primo passo del collegamento nanodosimetrico: scoperto e corretto un bug (taglio di produzione troppo grosso), spettro reale degli elettroni secondari verificato (100\% sotto 1 MeV, mediana 1.86 keV) -\/- il presupposto fisico dell\textquotesingle accoppiamento con Geant4-DNA e\textquotesingle{} confermato \\
 geant4dna\_icsd/build/nanoICSD (energie reali dalla 5.39) & 5.40 & Collegamento nanodosimetrico completato: ICSD da energie di elettroni secondari REALI (CNAO) si inseriscono coerentemente tra i punti gia\textquotesingle{} pubblicati nel paper Villagrasa/Baiocco -\/- catena macro-a-nano verificata end-to-end \\
 geant4dna\_icsd/nanoICSD.cc (seed esplicito, verifica 4 seed) & 5.41 & Verifica Monte Carlo di nanoICSD: M1=1.090 confermato stabile (CV 0.34\% su 4 seed) -\/- a differenza della mappa di dose (5.32), qui non c\textquotesingle e\textquotesingle{} un problema di rumore statistico \\
+geant4dna\_ssbdsb (moleculardna, energie reali dalla 5.39) & 5.42 & Danno DNA reale (SSB/DSB) da elettroni secondari CNAO: frazione DSB piu\textquotesingle{} alta a bassa energia (LET piu\textquotesingle{} alto), verificato su 3 seed (SB CV 1.8\%, DSB CV 12.4\%) -\/- chiude il collegamento nanodosimetrico fino al livello del DNA \\
 \end{longtable}
 }
 

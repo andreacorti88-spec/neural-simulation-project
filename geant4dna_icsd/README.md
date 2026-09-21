@@ -60,12 +60,15 @@ sembri:
    conoscenza approfondita" di come ciascun codice gestisce le sezioni
    d'urto internamente — non è un'estensione da weekend.
 
-**Non riproduce il confronto sul danno al DNA (SSB/DSB)** fatto con
-PARTRAC: quello richiede un modello geometrico di nucleo cellulare con
-cromatina multi-scala, che in Geant4-DNA esiste (vedi gli esempi
-ufficiali `dnadamage1`/`molecularDNA` nel repository Geant4-DNA) ma va
-integrato a parte, dopo aver validato questo primo livello (la ICSD).
-È il passo naturale successivo, non incluso qui.
+~~Non riproduce il confronto sul danno al DNA (SSB/DSB)~~ **FATTO**
+(sezione 5.42, progetto `geant4dna_ssbdsb`): usato l'esempio ufficiale
+`moleculardna` (non `dnadamage1`, bloccato da una dipendenza esterna
+mancante -- vedi il README di `geant4dna_ssbdsb`) con le energie reali
+dello spettro di elettroni secondari CNAO. Non e' il confronto
+completo con PARTRAC del paper originale (richiederebbe calibrare i
+parametri del modello di danno su dati sperimentali specifici), ma un
+primo livello funzionante e verificato -- SSB/DSB reali, non solo
+ICSD.
 
 ## Prerequisiti
 

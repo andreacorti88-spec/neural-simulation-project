@@ -35,7 +35,8 @@ Il resoconto completo (quasi 400 pagine, con ogni esperimento spiegato in dettag
 | [`/visualizations`](visualizations) | Le visualizzazioni 3D interattive (HTML, autonome) |
 | [`/report`](report) | Il resoconto completo (PDF/DOCX) |
 | [`/geant4_cnao_ring`](geant4_cnao_ring) | Progetto Geant4 (C++): impatto fisico dei fasci CNAO sull'architettura neurale — vedi il README dedicato |
-| [`/geant4dna_icsd`](geant4dna_icsd) | Progetto Geant4-DNA (C++): nanodosimetria a livello di elettroni secondari, collegato a `geant4_cnao_ring` (sezioni 5.39-5.40) — vedi il README dedicato |
+| [`/geant4dna_icsd`](geant4dna_icsd) | Progetto Geant4-DNA (C++): nanodosimetria a livello di elettroni secondari, collegato a `geant4_cnao_ring` (sezioni 5.39-5.41) — vedi il README dedicato |
+| [`/geant4dna_ssbdsb`](geant4dna_ssbdsb) | Progetto Geant4-DNA (C++, esempio `moleculardna`): danno reale al DNA (SSB/DSB) da elettroni secondari CNAO (sezione 5.42) — vedi il README dedicato |
 
 ## Come eseguire
 

@@ -244,7 +244,7 @@ resoconto, sezioni 5.22-5.26.
    con quanto sono sbilanciati i neuroni spenti tra i due messaggi, non
    un fenomeno di tutto-o-niente.
 
-## Aggiornamenti (sezioni 5.28-5.41)
+## Aggiornamenti (sezioni 5.28-5.42)
 
 - **5.28 -- Gradiente confermato con i protoni**: mappa di dose al picco
   di Bragg per protone 70 MeV, sbilanciamento 4-vs-0 (il piu' netto
@@ -333,6 +333,19 @@ resoconto, sezioni 5.22-5.26.
   statistico. La catena fisica macro-a-nano e' ora verificata
   end-to-end. Dettagli completi nel README di
   `geant4dna_icsd` (ora anch'esso dentro `neuroni-progetto/`).
+- **5.42 -- Oltre gli ICSD: danno reale al DNA**: chiuso l'ultimo
+  punto aperto (capitolo 9 del resoconto). Primo tentativo con
+  `dnadamage1` bloccato da una dipendenza esterna mancante (verificato,
+  non ipotizzato); usato invece `moleculardna` (Geant4-DNA
+  collaboration, geometria scaricata automaticamente, nessuno strumento
+  esterno necessario). Eseguito con le energie reali della 5.39
+  (mediana 1860 eV, p90 7332 eV): frazione di rotture doppie (DSB) piu'
+  alta a bassa energia (12.6% contro 7.4%), coerente col LET piu' alto
+  a energia piu' bassa. Verificato su 3 seed (aggiunta un'opzione -s,
+  il codice originale non ne aveva una): SB stabile (CV 1.8%), DSB piu'
+  rumoroso (CV 12.4%, atteso per conteggi piccoli). Dettagli completi
+  nel README di `geant4dna_ssbdsb` (nuovo progetto dentro
+  `neuroni-progetto/`).
 
 ## Build ed esecuzione
 
